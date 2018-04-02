@@ -32,10 +32,8 @@ async def get_or_create_entity_type(connection, type_name):
         return result
 
 
-async def get_or_create_entity(connection, type_name, token):
+async def get_or_create_entity(connection, type_id, token):
     async with connection.begin() as trans:
-        type_id = get_or_create_entity_type(connection, type_name)
-
         ds = await connection.exec(
             select([
                 entity.c.id.label("entity_id")
