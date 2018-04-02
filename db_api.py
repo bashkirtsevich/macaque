@@ -111,6 +111,8 @@ async def add_or_update_comment_text(connection, comment_id, text):
                 )
             ).primary_key[0]
 
-        await trans.commit()
+            await trans.commit()
 
-        return result
+            return result
+        else:
+            return None
