@@ -98,3 +98,18 @@ async def add_or_update_comment_text(connection, comment_id, text):
             return result
         else:
             return None
+
+
+async def add_comment(connection, entity_id, user_id, parent_comment_id=None):
+    async with connection.begin() as trans:
+        result = await connection.exec(
+            comment.insert().values(
+                entity=entity_id,
+                user=user_id,
+                comment=parent_comment_id
+            )
+        ).primary_key[0]
+
+        await trans.commit()
+
+        return result
