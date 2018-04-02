@@ -113,3 +113,23 @@ async def add_comment(connection, entity_id, user_id, parent_comment_id=None):
         await trans.commit()
 
         return result
+
+
+async def delete_comment(connection, comment_id):
+    query = exists().select_from(comment).where(
+        comment.c.comment == comment_id
+    )
+
+    async with connection.begin() as trans:
+        if await connection.scalar(query):
+            return False
+        else:
+            await connection.exec(
+                comment.delete().where(
+                    comment=comment_id
+                )
+            )
+
+            await trans.commit()
+
+            return True
