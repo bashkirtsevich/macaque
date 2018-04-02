@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, and_, exists
+from sqlalchemy import select, and_, func
 
 from schema import *
 from utils import sha1_str
@@ -75,7 +75,7 @@ async def get_or_create_user(connection, token):
 async def add_or_update_comment_text(connection, comment_id, text):
     text_hash = sha1_str(text)
 
-    query = exists().select_from(comment_text).where(
+    query = select([func.count()]).select_from(comment_text).where(
         and_(
             comment_text.c.comment == comment_id,
             comment_text.c.hash == text_hash
@@ -83,7 +83,7 @@ async def add_or_update_comment_text(connection, comment_id, text):
     )
 
     async with connection.begin() as trans:
-        if not await connection.scalar(query):
+        if await connection.scalar(query) == 0:
             result = await connection.exec(
                 comment_text.insert().values(
                     comment=comment_id,
@@ -116,12 +116,12 @@ async def add_comment(connection, entity_id, user_id, parent_comment_id=None):
 
 
 async def delete_comment(connection, comment_id):
-    query = exists().select_from(comment).where(
+    query = select([func.count()]).select_from(comment).where(
         comment.c.comment == comment_id
     )
 
     async with connection.begin() as trans:
-        if await connection.scalar(query):
+        if await connection.scalar(query) > 0:
             return False
         else:
             await connection.exec(
