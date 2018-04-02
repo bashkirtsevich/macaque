@@ -30,12 +30,12 @@ comment = Table(
     Column("comment", ForeignKey("comment.id"), index=True),
 )
 
-comment_data = Table(
-    "comment_data", metadata,
+comment_text = Table(
+    "comment_text", metadata,
     Column("id", Integer, primary_key=True),
     Column("comment", ForeignKey("comment.id"), index=True, nullable=False),
     Column("timestamp", DateTime, index=True, nullable=False),
     Column("hash", Text, index=True),
-    Column("data", Text, index=True),
+    Column("data", Text),
     UniqueConstraint("id", "hash"),
 )
