@@ -93,14 +93,15 @@ async def get_or_create_user(connection, token):
 async def add_or_update_comment_text(connection, comment_id, text):
     text_hash = sha1_str(text)
 
+    query = exists().select_from(comment_text).where(
+        and_(
+            comment_text.c.comment == comment_id,
+            comment_text.c.hash == text_hash
+        )
+    )
+
     async with connection.begin() as trans:
-        if not await connection.scalar(
-                exists().select_from(comment_text).where(
-                    and_(
-                        comment_text.c.comment == comment_id,
-                        comment_text.c.hash == text_hash
-                    )
-                )):
+        if not await connection.scalar(query):
             result = await connection.exec(
                 comment_text.insert().values(
                     comment=comment_id,
