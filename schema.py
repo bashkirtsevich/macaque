@@ -27,7 +27,7 @@ comment = Table(
     Column("id", Integer, primary_key=True),
     Column("entity", ForeignKey("entity.id"), index=True, nullable=False),
     Column("user", ForeignKey("user.id"), index=True, nullable=False),
-    Column("user", ForeignKey("comment.id"), index=True),
+    Column("comment", ForeignKey("comment.id"), index=True),
 )
 
 comment_data = Table(
