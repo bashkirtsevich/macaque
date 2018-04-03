@@ -11,48 +11,30 @@ class ServerException(Exception):
     pass
 
 
-async def handle_post(connection, request, future):
-    try:
-        data = await request.json()
-        result = await future(connection, data)
-        return web.json_response({"result": result})
-    except TimeoutError:
-        return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
-    except ServerException as e:
-        return web.json_response({"result": "error", "error": str(e)}, status=500)
-    except Exception as e:
-        return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
+add_comment_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "entity": {
+            "type": "dict", "required": True,
+            "schema": {
+                "type": {"type": "str", "required": True},
+                "token": {"type": "str", "required": True}
+            }
+        },
+        "user_token": {"type": "str", "required": True},
+        "text": {"type": "str", "required": True}
+    })
 
-
-add_comment_schema = {
-    "entity": {
-        "type": "dict", "required": True,
-        "schema": {
-            "type": {"type": "str", "required": True},
-            "token": {"type": "str", "required": True}
-        }
-    },
-    "user_token": {"type": "str", "required": True},
-    "text": {"type": "str", "required": True}
-}
-
-add_comment_validator = Validator(add_comment_schema, allow_unknown=False)
-
-edit_comment_schema = {
-    "user_token": {"type": "str", "required": True},
-    "comment_token": {"type": "str", "required": True},
-    "text": {"type": "str", "required": True}
-}
-
-edit_comment_validator = Validator(edit_comment_schema, allow_unknown=False)
+edit_comment_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "user_token": {"type": "str", "required": True},
+        "comment_token": {"type": "str", "required": True},
+        "text": {"type": "str", "required": True}
+    })
 
 
 async def add_comment(connection, data):
-    if not add_comment_validator.validate(data):
-        raise ServerException(
-            "Invalid arguments for '{}' ({})".format(add_comment, add_comment_validator.errors)
-        )
-
     entity = data["entity"]
 
     comment_token = await api.add_comment(
@@ -67,19 +49,40 @@ async def add_comment(connection, data):
 
 
 async def edit_comment(connection, data):
-    if not edit_comment_validator.validate(data):
-        raise ServerException(
-            "Invalid arguments for '{}' ({})".format(edit_comment, edit_comment_validator.errors)
-        )
-
-    success = await api.edit_comment(
+    revision_key = await api.edit_comment(
         connection,
         user_token=data["user_token"],
         comment_unique_key=data["comment_token"],
         text=data["text"]
     )
 
-    return {"success": success is not None}
+    return {"success": revision_key is not None}
+
+
+arg_validators = {
+    add_comment: add_comment_validator,
+    edit_comment: edit_comment_validator
+}
+
+
+async def handle_post(connection, request, future):
+    try:
+        data = await request.json()
+
+        validator = arg_validators[future]
+        if not validator.validate(data):
+            raise ServerException(
+                "Invalid arguments ({})".format(validator.errors)
+            )
+
+        result = await future(connection, data)
+        return web.json_response({"result": result})
+    except TimeoutError:
+        return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
+    except ServerException as e:
+        return web.json_response({"result": "error", "error": str(e)}, status=500)
+    except Exception as e:
+        return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
 
 
 if __name__ == "__main__":
