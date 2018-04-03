@@ -115,7 +115,7 @@ async def insert_comment(connection, entity_id, user_id, unique_key, text, text_
         return result
 
 
-async def get_comment_id_by_key(connection, unique_key):
+async def get_comment_by_key(connection, unique_key):
     query = select([
         comment.c.id.label("comment_id")
     ]).select_from(
@@ -126,7 +126,7 @@ async def get_comment_id_by_key(connection, unique_key):
 
     ds = await connection.exec(query)
     if ds.rowcount:
-        return ds.first()["comment_id"]
+        return dict(ds.first())
     else:
         return None
 
