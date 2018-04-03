@@ -38,6 +38,14 @@ add_comment_schema = {
 
 add_comment_validator = Validator(add_comment_schema, allow_unknown=False)
 
+edit_comment_schema = {
+    "user_token": {"type": "str", "required": True},
+    "comment_token": {"type": "str", "required": True},
+    "text": {"type": "str", "required": True}
+}
+
+edit_comment_validator = Validator(edit_comment_schema, allow_unknown=False)
+
 
 async def add_comment(connection, data):
     if not add_comment_validator.validate(data):
@@ -58,6 +66,22 @@ async def add_comment(connection, data):
     return {"comment_token": comment_token}
 
 
+async def edit_comment(connection, data):
+    if not edit_comment_validator.validate(data):
+        raise ServerException(
+            "Invalid arguments for '{}' ({})".format(edit_comment, edit_comment_validator.errors)
+        )
+
+    success = await api.edit_comment(
+        connection,
+        user_token=data["user_token"],
+        comment_unique_key=data["comment_token"],
+        text=data["text"]
+    )
+
+    return {"success": success is not None}
+
+
 if __name__ == "__main__":
     db_engine = create_engine(os.getenv("DATABASE_URL"))
     db_connection = db_engine.connect()
@@ -65,6 +89,9 @@ if __name__ == "__main__":
     app = web.Application()
     app.router.add_post(
         "/api/add_comment", lambda request: handle_post(db_connection, request, add_comment)
+    )
+    app.router.add_post(
+        "/api/edit_comment", lambda request: handle_post(db_connection, request, edit_comment)
     )
 
     web.run_app(app)
