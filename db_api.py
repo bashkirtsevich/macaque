@@ -6,17 +6,17 @@ from schema import *
 
 
 async def select_or_insert(connection, query_select, field, query_insert):
-    async with connection.begin() as trans:
-        ds = await connection.exec(query_select)
+    ds = await connection.exec(query_select)
 
-        if ds.rowcount:
-            result = ds.first()[field]
-        else:
+    if ds.rowcount:
+        result = ds.first()[field]
+    else:
+        async with connection.begin() as trans:
             result = await connection.exec(query_insert).inserted_primary_key[0]
 
-        await trans.commit()
+            await trans.commit()
 
-        return result
+    return result
 
 
 async def get_or_create_entity_type(connection, type_name):
