@@ -21,3 +21,19 @@ async def add_comment(connection, entity_type, entity_token, user_token, text):
 
     return result
 
+
+async def edit_comment(connection, user_token, comment_unique_key, text):
+    user_id = await db_api.get_user_id_by_token(connection, user_token)
+    comment = await db_api.get_comment_by_key(connection, comment_unique_key)
+
+    if comment["user"] != user_id:
+        raise Exception("Access denied. Invalid user token.")
+
+    result = await db_api.add_or_update_comment_text(
+        connection,
+        comment_id=comment["id"],
+        text=text,
+        text_hash=sha1(text)
+    )
+
+    return result
