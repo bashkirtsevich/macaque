@@ -12,7 +12,7 @@ async def select_or_insert(connection, query_select, query_insert):
         if ds.rowcount:
             result = ds.first()
         else:
-            result = await connection.exec(query_insert).primary_key[0]
+            result = await connection.exec(query_insert).inserted_primary_key[0]
 
         await trans.commit()
 
@@ -88,7 +88,7 @@ async def add_or_update_comment_text(connection, comment_id, text, text_hash):
                     hash=text_hash,
                     data=text
                 )
-            ).primary_key[0]
+            ).inserted_primary_key[0]
 
             await trans.commit()
 
@@ -106,7 +106,7 @@ async def add_comment(connection, entity_id, user_id, unique_key, parent_comment
                 key=unique_key,
                 comment=parent_comment_id
             )
-        ).primary_key[0]
+        ).inserted_primary_key[0]
 
         await trans.commit()
 
