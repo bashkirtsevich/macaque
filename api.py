@@ -46,5 +46,7 @@ async def edit_comment(connection, user_token, comment_unique_key, text):
 
 async def remove_comment(connection, user_token, comment_unique_key):
     comment = await _try_get_comment(connection, user_token, comment_unique_key)
-    result = await db_api.delete_comment(connection, comment["id"])
-    return result
+    if not await db_api.delete_comment(connection, comment["id"]):
+        raise Exception("Could not delete comment")
+    else:
+        return True
