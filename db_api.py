@@ -71,6 +71,22 @@ async def get_or_create_user(connection, token):
     return await select_or_insert(connection, query_select, "user_id", query_insert)
 
 
+async def get_user_id_by_token(connection, token):
+    query_select = select([
+        user.c.id.label("user_id")
+    ]).select_from(
+        user
+    ).where(
+        user.c.token == token
+    )
+
+    ds = await connection.exec(query_select)
+    if ds.rowcount:
+        return ds.first()["user_id"]
+    else:
+        return None
+
+
 async def add_or_update_comment_text(connection, comment_id, text, text_hash):
     query = select([func.count()]).select_from(comment_text).where(
         and_(
