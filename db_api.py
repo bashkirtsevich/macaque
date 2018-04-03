@@ -5,12 +5,12 @@ from sqlalchemy import select, and_, func
 from schema import *
 
 
-async def select_or_insert(connection, query_select, query_insert):
+async def select_or_insert(connection, query_select, field, query_insert):
     async with connection.begin() as trans:
         ds = await connection.exec(query_select)
 
         if ds.rowcount:
-            result = ds.first()
+            result = ds.first()[field]
         else:
             result = await connection.exec(query_insert).inserted_primary_key[0]
 
@@ -32,7 +32,7 @@ async def get_or_create_entity_type(connection, type_name):
         name=type_name.lower()
     )
 
-    return await select_or_insert(connection, query_select, query_insert)
+    return await select_or_insert(connection, query_select, "type_id", query_insert)
 
 
 async def get_or_create_entity(connection, type_id, token):
@@ -52,7 +52,7 @@ async def get_or_create_entity(connection, type_id, token):
         token=token
     )
 
-    return await select_or_insert(connection, query_select, query_insert)
+    return await select_or_insert(connection, query_select, "entity_id", query_insert)
 
 
 async def get_or_create_user(connection, token):
@@ -68,7 +68,7 @@ async def get_or_create_user(connection, token):
         token=token
     )
 
-    return await select_or_insert(connection, query_select, query_insert)
+    return await select_or_insert(connection, query_select, "user_id", query_insert)
 
 
 async def add_or_update_comment_text(connection, comment_id, text, text_hash):
