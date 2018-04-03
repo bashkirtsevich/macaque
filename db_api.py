@@ -117,7 +117,7 @@ async def insert_comment(connection, entity_id, user_id, unique_key, text, text_
 
 async def get_comment_by_key(connection, unique_key):
     query = select([
-        comment.c.id.label("comment_id")
+        comment
     ]).select_from(
         comment
     ).where(
