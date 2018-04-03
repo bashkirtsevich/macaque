@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import select, and_, func
 
 from schema import *
-from utils import sha1_str
 
 
 async def select_or_insert(connection, query_select, query_insert):
@@ -72,9 +71,7 @@ async def get_or_create_user(connection, token):
     return await select_or_insert(connection, query_select, query_insert)
 
 
-async def add_or_update_comment_text(connection, comment_id, text):
-    text_hash = sha1_str(text)
-
+async def add_or_update_comment_text(connection, comment_id, text, text_hash):
     query = select([func.count()]).select_from(comment_text).where(
         and_(
             comment_text.c.comment == comment_id,
@@ -100,12 +97,13 @@ async def add_or_update_comment_text(connection, comment_id, text):
             return None
 
 
-async def add_comment(connection, entity_id, user_id, parent_comment_id=None):
+async def add_comment(connection, entity_id, user_id, unique_key, parent_comment_id=None):
     async with connection.begin() as trans:
         result = await connection.exec(
             comment.insert().values(
                 entity=entity_id,
                 user=user_id,
+                key=unique_key,
                 comment=parent_comment_id
             )
         ).primary_key[0]

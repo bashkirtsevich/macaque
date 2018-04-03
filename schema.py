@@ -28,6 +28,7 @@ comment = Table(
     Column("entity", ForeignKey("entity.id"), index=True, nullable=False),
     Column("user", ForeignKey("user.id"), index=True, nullable=False),
     Column("comment", ForeignKey("comment.id"), index=True),
+    Column("key", Text, index=True),
 )
 
 comment_text = Table(
