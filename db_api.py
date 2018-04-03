@@ -115,6 +115,22 @@ async def insert_comment(connection, entity_id, user_id, unique_key, text, text_
         return result
 
 
+async def get_comment_id_by_key(connection, unique_key):
+    query = select([
+        comment.c.id.label("comment_id")
+    ]).select_from(
+        comment
+    ).where(
+        comment.c.key == unique_key
+    )
+
+    ds = await connection.exec(query)
+    if ds.rowcount:
+        return ds.first()["comment_id"]
+    else:
+        return None
+
+
 async def delete_comment(connection, comment_id):
     query = select([func.count()]).select_from(comment).where(
         comment.c.comment == comment_id
