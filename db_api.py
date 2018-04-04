@@ -180,9 +180,12 @@ async def get_entity_comments(connection, entity_id):
     comment_text_max_id = select([
         func.max(comment_text.c.id).label("max_id"),
         func.min(comment_text.c.timestamp).label("created"),
-        func.max(comment_text.c.timestamp).label("updated")
+        func.max(comment_text.c.timestamp).label("updated"),
+        comment_text.c.comment
     ]).select_from(
         comment_text
+    ).group_by(
+        comment_text.c.comment
     ).alias("comment_text_max_id")
 
     comment_text_last_data = select([
@@ -193,7 +196,11 @@ async def get_entity_comments(connection, entity_id):
     ]).select_from(
         comment_text.join(
             comment_text_max_id,
-            comment_text.c.id == comment_text_max_id.c.max_id
+            and_(
+                comment_text.c.id == comment_text_max_id.c.max_id,
+                comment_text.c.comment == comment_text_max_id.c.comment,
+            )
+
         )
     ).alias("comment_text_last_data")
 
