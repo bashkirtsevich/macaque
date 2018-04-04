@@ -79,9 +79,8 @@ async def handle_post(connection, request, future):
 
 
 if __name__ == "__main__":
-    # db_engine = create_engine(os.getenv("DATABASE_URL"))
-    # db_connection = db_engine.connect()
-    db_connection=None
+    db_engine = create_engine(os.getenv("DATABASE_URL"))
+    db_connection = db_engine.connect()
 
     app = web.Application()
     app.router.add_post(
