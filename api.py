@@ -91,5 +91,9 @@ async def get_entity_comments(connection, entity_type, entity_token):
     if not entity_id:
         raise APIException("Entity '{}' was not found".format(entity_token))
 
-    return [{"text": item["text"], "created": str(item["created"]), "updated": str(item["updated"])}
-            async for item in db_api.get_entity_comments(connection, entity_id)]
+    return [{
+        "text": item["text"],
+        "created": str(item["created"]),
+        "updated": str(item["updated"]),
+        "user": item["token"]}
+        async for item in db_api.get_entity_comments(connection, entity_id)]

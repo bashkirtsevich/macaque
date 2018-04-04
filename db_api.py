@@ -209,10 +209,13 @@ async def get_entity_comments(connection, entity_id):
     query = select([
         comment_text_last_data.c.text,
         comment_text_last_data.c.created,
-        comment_text_last_data.c.updated
+        comment_text_last_data.c.updated,
+        user.c.token
     ]).select_from(
         comment.join(
             comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
+        ).join(
+            user, user.c.id == comment.c.user
         )
     ).where(
         and_(
