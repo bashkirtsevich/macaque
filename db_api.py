@@ -174,3 +174,46 @@ async def delete_comment(connection, comment_id):
             await trans.commit()
 
             return True
+
+
+async def get_entity_comments(connection, entity_id):
+    comment_text_max_id = select([
+        func.max(comment_text.c.id).label("max_id"),
+        func.min(comment_text.c.timestamp).label("created"),
+        func.max(comment_text.c.timestamp).label("updated")
+    ]).select_from(
+        comment_text
+    ).alias("comment_text_max_id")
+
+    comment_text_last_data = select([
+        comment_text.c.data.label("text"),
+        comment_text_max_id.c.created,
+        comment_text_max_id.c.updated,
+        comment_text.c.comment
+    ]).select_from(
+        comment_text.join(
+            comment_text_max_id,
+            comment_text.c.id == comment_text_max_id.c.max_id
+        )
+    ).alias("comment_text_last_data")
+
+    query = select([
+
+    ]).select_from(
+        comment.join(
+            comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
+        )
+    ).where(
+        and_(
+            comment.c.entity == entity_id,
+            comment.c.comment == None
+        )
+    )
+
+    ds = await connection.exec(query)
+
+    if ds.rowcount:
+        for item in ds:
+            yield dict(item)
+    else:
+        yield None
