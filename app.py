@@ -13,7 +13,7 @@ class ServerException(Exception):
     pass
 
 
-async def read_args(request):
+async def _read_args(request):
     return {**await request.json(), **dict(request.match_info)}
 
 
@@ -63,7 +63,7 @@ async def remove_comment(connection, data):
 
 async def upload_comments(connection, request):
     try:
-        data = await read_args(request)
+        data = await _read_args(request)
 
         validate_args(data, upload_comments_validator)
 
@@ -101,7 +101,7 @@ arg_validators = {
 
 async def handle_post(connection, request, future):
     try:
-        data = await read_args(request)
+        data = await _read_args(request)
 
         validate_args(data, arg_validators[future])
 
