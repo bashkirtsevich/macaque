@@ -3,6 +3,7 @@ import os
 
 from aiohttp import web
 from sqlalchemy import create_engine
+from sqlalchemy_aio import ASYNCIO_STRATEGY
 
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
@@ -111,9 +112,9 @@ async def handle_post(connection, request, future):
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
 
 
-if __name__ == "__main__":
-    db_engine = create_engine(os.getenv("DATABASE_URL"))
-    db_connection = db_engine.connect()
+async def main():
+    db_engine = create_engine(os.getenv("DATABASE_URL"), strategy=ASYNCIO_STRATEGY)
+    db_connection = await db_engine.connect()
 
     app = web.Application()
     app.router.add_post(
@@ -132,4 +133,8 @@ if __name__ == "__main__":
         "/api/comments/{type}/{entity}", lambda request: upload_comments(db_connection, request)
     )
 
-    web.run_app(app)
+    return app
+
+
+if __name__ == "__main__":
+    web.run_app(main())
