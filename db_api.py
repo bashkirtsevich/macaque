@@ -4,8 +4,10 @@ from sqlalchemy import select, and_, func, desc
 
 from schema import *
 
+
 class DBException(Exception):
     pass
+
 
 async def select_or_insert(connection, query_select, field, query_insert, create_if_none=True):
     ds = await connection.execute(query_select)
@@ -171,7 +173,7 @@ async def delete_comment(connection, comment_id):
         else:
             await connection.execute(
                 comment.delete().where(
-                    comment=comment_id
+                    comment.c.id == comment_id
                 )
             )
 
