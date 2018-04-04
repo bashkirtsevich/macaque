@@ -52,7 +52,7 @@ upload_comments_validator = Validator(
     })
 
 
-async def reply_entity(connection, data, **kwargs):
+async def reply_entity(connection, data):
     comment_token = await api.add_comment(
         connection,
         entity_type=data["type"],
@@ -64,7 +64,7 @@ async def reply_entity(connection, data, **kwargs):
     return {"comment_token": comment_token}
 
 
-async def reply_comment(connection, data, **kwargs):
+async def reply_comment(connection, data):
     comment_token = await api.reply_comment(
         connection,
         parent_comment_token=data["comment_token"],
@@ -75,7 +75,7 @@ async def reply_comment(connection, data, **kwargs):
     return {"comment_token": comment_token}
 
 
-async def edit_comment(connection, data, **kwargs):
+async def edit_comment(connection, data):
     revision_key = await api.edit_comment(
         connection,
         user_token=data["user_token"],
@@ -86,7 +86,7 @@ async def edit_comment(connection, data, **kwargs):
     return {"success": revision_key is not None}
 
 
-async def remove_comment(connection, data, **kwargs):
+async def remove_comment(connection, data):
     await api.remove_comment(
         connection,
         user_token=data["user_token"],
@@ -96,42 +96,60 @@ async def remove_comment(connection, data, **kwargs):
     return {"success": True}
 
 
-async def upload_comments(connection, data, request):
-    response = web.StreamResponse(
-        status=200,
-        reason="OK",
-        headers={"Content-Type": "application/json"}
-    )
-
-    await response.prepare(request)
-    await response.write(b"[")
-
-    for index, item in enumerate(api.get_comments(connection, data["type"], data["entity"])):
-        response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
-        await response.write(response_str.encode("utf-8"))
-
-    await response.write_eof(b"]")
-    return response
-
-
 arg_validators = {
     reply_entity: reply_entity_validator,
     reply_comment: reply_comment_validator,
     edit_comment: edit_comment_validator,
     remove_comment: remove_comment_validator,
-    upload_comments: upload_comments_validator
 }
+
+
+def validate_args(data, validator):
+    if not validator.validate(data):
+        raise ServerException(
+            "Invalid arguments ({})".format(validator.errors)
+        )
+
+
+async def read_args(request):
+    return {**await request.json(), **dict(request.match_info)}
+
+
+async def upload_comments(connection, request):
+    try:
+        data = await read_args(request)
+
+        validate_args(data, upload_comments_validator)
+
+        response = web.StreamResponse(
+            status=200,
+            reason="OK",
+            headers={"Content-Type": "application/json"}
+        )
+
+        await response.prepare(request)
+        await response.write(b"[")
+
+        for index, item in enumerate(api.get_comments(connection, data["type"], data["entity"])):
+            response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
+            await response.write(response_str.encode("utf-8"))
+
+        await response.write_eof(b"]")
+
+        return response
+    except TimeoutError:
+        return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
+    except ServerException as e:
+        return web.json_response({"result": "error", "error": str(e)}, status=500)
+    except Exception as e:
+        return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
 
 
 async def handle_post(connection, request, future):
     try:
-        data = {**await request.json(), **dict(request.match_info)}
+        data = await read_args(request)
 
-        validator = arg_validators[future]
-        if not validator.validate(data):
-            raise ServerException(
-                "Invalid arguments ({})".format(validator.errors)
-            )
+        validate_args(data, arg_validators[future])
 
         result = await future(connection, data, request=request)
         return web.json_response({"result": result})
