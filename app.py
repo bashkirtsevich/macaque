@@ -1,3 +1,4 @@
+import json
 import os
 
 from aiohttp import web
@@ -86,6 +87,22 @@ async def remove_comment(connection, data):
     )
 
     return {"success": True}
+
+
+async def upload_comments(connection, data):
+    response = web.StreamResponse(
+        status=200,
+        reason="OK",
+        headers={"Content-Type": "application/json"}
+    )
+
+    await response.write(b"[")
+
+    for index, item in enumerate(api.get_comments(connection, None, None)):
+        response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
+        await response.write(response_str.encode("utf-8"))
+
+    await response.write(b"]")
 
 
 arg_validators = {
