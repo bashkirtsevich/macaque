@@ -101,7 +101,7 @@ async def handle_post(connection, request, future):
 
         validate_args(data, arg_validators[future])
 
-        result = await future(connection, data, request=request)
+        result = await future(connection, data)
         return web.json_response({"result": result})
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
