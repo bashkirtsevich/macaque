@@ -62,7 +62,7 @@ arg_validators = {
 
 async def handle_post(connection, request, future):
     try:
-        data = {**await request.json(), **dict(request.match_info.)}
+        data = {**await request.json(), **dict(request.match_info)}
 
         validator = arg_validators[future]
         if not validator.validate(data):
