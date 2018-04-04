@@ -40,7 +40,7 @@ remove_comment_validator = Validator(
         "user_token": {"type": "string", "required": True},
         "comment_token": {"type": "string", "required": True}
     })
-upload_comments_validator = Validator(
+read_entity_comments_validator = Validator(
     allow_unknown=False,
     schema={
         "type": {"type": "string", "required": True},

@@ -226,7 +226,7 @@ async def get_entity_comments(connection, entity_id):
     ds = await connection.execute(query)
 
     if ds.rowcount:
-        for item in ds:
+        async for item in ds:
             yield dict(item)
     else:
         raise DBException("Data not found")

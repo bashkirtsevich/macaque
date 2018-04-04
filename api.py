@@ -3,8 +3,10 @@ from uuid import uuid4
 import db_api
 from utils import sha1
 
+
 class APIException(Exception):
     pass
+
 
 def _create_comment_identifiers(text):
     return str(uuid4()), sha1(text)
@@ -80,7 +82,7 @@ async def remove_comment(connection, user_token, comment_unique_key):
         return True
 
 
-async def get_comments(connection, entity_type, entity_token):
+async def get_entity_comments(connection, entity_type, entity_token):
     type_id = await db_api.get_or_create_entity_type(connection, entity_type, create_if_none=False)
     if not type_id:
         raise APIException("Unknown entity type '{}'".format(entity_type))
@@ -89,9 +91,5 @@ async def get_comments(connection, entity_type, entity_token):
     if not entity_id:
         raise APIException("Entity '{}' was not found".format(entity_token))
 
-    for item in await db_api.get_entity_comments(connection, entity_id):
-        yield {
-            "text": item["text"],
-            "created": item["created"],
-            "updated": item["updated"],
-        }
+    return [{"text": item["text"], "created": str(item["created"]), "updated": str(item["updated"])}
+            async for item in db_api.get_entity_comments(connection, entity_id)]

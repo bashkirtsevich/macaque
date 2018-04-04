@@ -1,4 +1,3 @@
-import json
 import os
 
 from aiohttp import web
@@ -7,7 +6,7 @@ from sqlalchemy_aio import ASYNCIO_STRATEGY
 
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
-    remove_comment_validator, upload_comments_validator, validate_args, ValidatorException
+    remove_comment_validator, read_entity_comments_validator, validate_args, ValidatorException
 
 
 async def _read_args(request):
@@ -61,36 +60,8 @@ async def remove_comment(connection, data):
     return {"success": True}
 
 
-async def upload_comments(connection, request):
-    try:
-        data = await _read_args(request)
-
-        validate_args(data, upload_comments_validator)
-
-        response = web.StreamResponse(
-            status=200,
-            reason="OK",
-            headers={"Content-Type": "application/json"}
-        )
-
-        await response.prepare(request)
-        await response.write(b"[")
-
-        for index, item in enumerate(await api.get_comments(connection, data["type"], data["entity"])):
-            response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
-            await response.write(response_str.encode("utf-8"))
-
-        await response.write_eof(b"]")
-
-        return response
-    except TimeoutError:
-        return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
-    except api.APIException as e:
-        return web.json_response({"result": "error", "reason": "API error ({})".format(str(e))}, status=500)
-    except ValidatorException as e:
-        return web.json_response({"result": "error", "error": str(e)}, status=500)
-    except Exception as e:
-        return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
+async def read_entity_comments(connection, data):
+    return await api.get_entity_comments(connection, data["type"], data["entity"])
 
 
 arg_validators = {
@@ -98,6 +69,7 @@ arg_validators = {
     reply_comment: reply_comment_validator,
     edit_comment: edit_comment_validator,
     remove_comment: remove_comment_validator,
+    read_entity_comments: read_entity_comments_validator,
 }
 
 
@@ -137,7 +109,7 @@ async def run_app():
         "/api/remove/{comment_token}", lambda request: handle_post(db_connection, request, remove_comment)
     )
     app.router.add_get(
-        "/api/comments/{type}/{entity}", lambda request: upload_comments(db_connection, request)
+        "/api/comments/{type}/{entity}", lambda request: handle_post(db_connection, request, read_entity_comments)
     )
 
     return app
