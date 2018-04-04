@@ -76,3 +76,16 @@ async def remove_comment(connection, user_token, comment_unique_key):
         raise Exception("Could not delete comment")
     else:
         return True
+
+
+async def get_comments(connection, entity_type, entity_token):
+    type_id = db_api.get_or_create_entity_type(connection, entity_type, create_if_none=False)
+    if not type_id:
+        raise Exception("Unknown entity type '{}'".format(entity_type))
+
+    entity_id = db_api.get_or_create_entity(connection, type_id, entity_token, create_if_none=False)
+    if not entity_id:
+        raise Exception("Entity '{}' was not found".format(entity_token))
+
+    for item in db_api.get_entity_comments(connection, entity_id):
+        yield item
