@@ -22,6 +22,28 @@ async def add_comment(connection, entity_type, entity_token, user_token, text):
     return result
 
 
+async def reply_comment(connection, parent_comment_token, user_token, text):
+    comment = await db_api.get_comment_by_key(connection, parent_comment_token)
+
+    if not comment:
+        raise Exception("Comment with token '{}' was not found".format(parent_comment_token))
+
+    user_id = await db_api.get_or_create_user(connection, user_token)
+
+    result = uuid4()
+    await db_api.insert_comment(
+        connection,
+        entity_id=comment["entity"],
+        user_id=user_id,
+        unique_key=result,
+        text=text,
+        text_hash=sha1(text),
+        parent_comment_id=comment["id"]
+    )
+
+    return result
+
+
 async def _try_get_comment(connection, user_token, comment_unique_key):
     user_id = await db_api.get_user_id_by_token(connection, user_token)
     comment = await db_api.get_comment_by_key(connection, comment_unique_key)
