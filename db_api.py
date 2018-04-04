@@ -223,4 +223,4 @@ async def get_entity_comments(connection, entity_id):
         for item in ds:
             yield dict(item)
     else:
-        yield None
+        raise Exception("Data not found")
