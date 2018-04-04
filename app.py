@@ -89,13 +89,14 @@ async def remove_comment(connection, data):
     return {"success": True}
 
 
-async def upload_comments(connection, data):
+async def upload_comments(connection, request, data):
     response = web.StreamResponse(
         status=200,
         reason="OK",
         headers={"Content-Type": "application/json"}
     )
 
+    await response.prepare(request)
     await response.write(b"[")
 
     for index, item in enumerate(api.get_comments(connection, None, None)):
@@ -103,6 +104,7 @@ async def upload_comments(connection, data):
         await response.write(response_str.encode("utf-8"))
 
     await response.write(b"]")
+    return response
 
 
 arg_validators = {
