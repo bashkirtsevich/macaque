@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, desc
 
 from schema import *
 
@@ -215,6 +215,8 @@ async def get_entity_comments(connection, entity_id):
             comment.c.entity == entity_id,
             comment.c.comment == None
         )
+    ).order_by(
+        desc(comment_text_last_data.c.created)
     )
 
     ds = await connection.exec(query)
