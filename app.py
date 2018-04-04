@@ -11,7 +11,10 @@ from arg_schemas import reply_entity_validator, reply_comment_validator, edit_co
 
 
 async def _read_args(request):
-    return {**await request.json(), **dict(request.match_info)}
+    post_data = (await request.json()) if request.method == "POST" else {}
+    get_data = dict(request.match_info)
+
+    return {**get_data, **post_data}
 
 
 async def reply_entity(connection, data):
