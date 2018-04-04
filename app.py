@@ -110,7 +110,7 @@ async def upload_comments(connection, data, request):
         response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
         await response.write(response_str.encode("utf-8"))
 
-    await response.write(b"]")
+    await response.write_eof(b"]")
     return response
 
 
