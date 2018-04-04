@@ -16,7 +16,15 @@ reply_entity_validator = Validator(
     schema={
         "type": {"type": "string", "required": True},
         "entity": {"type": "string", "required": True},
-        "token": {"type": "string", "required": True},
+        "user_token": {"type": "string", "required": True},
+        "text": {"type": "string", "required": True}
+    })
+
+reply_comment_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "comment_token": {"type": "string", "required": True},
+        "user_token": {"type": "string", "required": True},
         "text": {"type": "string", "required": True}
     })
 
@@ -34,7 +42,18 @@ async def reply_entity(connection, data):
         connection,
         entity_type=data["type"],
         entity_token=data["entity"],
-        user_token=data["token"],
+        user_token=data["user_token"],
+        text=data["text"]
+    )
+
+    return {"comment_token": comment_token}
+
+
+async def reply_comment(connection, data):
+    comment_token = await api.reply_comment(
+        connection,
+        parent_comment_token=data["comment_token"],
+        user_token=data["user_token"],
         text=data["text"]
     )
 
@@ -54,6 +73,7 @@ async def edit_comment(connection, data):
 
 arg_validators = {
     reply_entity: reply_entity_validator,
+    reply_comment: reply_comment_validator,
     edit_comment: edit_comment_validator
 }
 
@@ -85,6 +105,9 @@ if __name__ == "__main__":
     app = web.Application()
     app.router.add_post(
         "/api/reply/{type}/{entity}", lambda request: handle_post(db_connection, request, reply_entity)
+    )
+    app.router.add_post(
+        "/api/reply/{comment_token}", lambda request: handle_post(db_connection, request, reply_comment)
     )
     app.router.add_post(
         "/api/edit/{comment_token}/{user_token}", lambda request: handle_post(db_connection, request, edit_comment)
