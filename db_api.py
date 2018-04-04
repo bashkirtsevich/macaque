@@ -88,15 +88,24 @@ async def get_user_id_by_token(connection, token):
 
 
 async def add_or_update_comment_text(connection, comment_id, text, text_hash):
-    query = select([func.count()]).select_from(comment_text).where(
-        and_(
-            comment_text.c.comment == comment_id,
-            comment_text.c.hash == text_hash
-        )
+    subquery = select([
+        func.max(comment_text.c.id).label("max_id")
+    ]).select_from(
+        comment_text
+    ).where(
+        comment_text.c.comment == comment_id
+    ).alias("comment_text_max_id")
+
+    query = select([
+        comment_text.c.hash.label("hash")
+    ]).select_from(
+        comment_text
+    ).where(
+        comment_text.c.id == subquery.c.max_id
     )
 
     async with connection.begin() as trans:
-        if await connection.scalar(query) == 0:
+        if await connection.scalar(query) != text_hash:
             result = await connection.exec(
                 comment_text.insert().values(
                     comment=comment_id,

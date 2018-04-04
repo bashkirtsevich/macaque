@@ -38,5 +38,4 @@ comment_text = Table(
     Column("timestamp", DateTime, index=True, nullable=False),
     Column("hash", Text, index=True),
     Column("data", Text),
-    UniqueConstraint("id", "hash"),
 )
