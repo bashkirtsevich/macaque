@@ -3,6 +3,8 @@ from uuid import uuid4
 import db_api
 from utils import sha1
 
+class APIException(Exception):
+    pass
 
 def _create_comment_identifiers(text):
     return str(uuid4()), sha1(text)
@@ -30,7 +32,7 @@ async def reply_comment(connection, parent_comment_token, user_token, text):
     comment = await db_api.get_comment_by_key(connection, parent_comment_token)
 
     if not comment:
-        raise Exception("Comment with token '{}' was not found".format(parent_comment_token))
+        raise APIException("Comment with token '{}' was not found".format(parent_comment_token))
 
     user_id = await db_api.get_or_create_user(connection, user_token)
 
@@ -53,7 +55,7 @@ async def _try_get_comment(connection, user_token, comment_unique_key):
     comment = await db_api.get_comment_by_key(connection, comment_unique_key)
 
     if comment["user"] != user_id:
-        raise Exception("Access denied. Invalid user token.")
+        raise APIException("Access denied. Invalid user token.")
     else:
         return comment
 
@@ -73,7 +75,7 @@ async def edit_comment(connection, user_token, comment_unique_key, text):
 async def remove_comment(connection, user_token, comment_unique_key):
     comment = await _try_get_comment(connection, user_token, comment_unique_key)
     if not await db_api.delete_comment(connection, comment["id"]):
-        raise Exception("Could not delete comment")
+        raise APIException("Could not delete comment")
     else:
         return True
 
@@ -81,11 +83,11 @@ async def remove_comment(connection, user_token, comment_unique_key):
 async def get_comments(connection, entity_type, entity_token):
     type_id = await db_api.get_or_create_entity_type(connection, entity_type, create_if_none=False)
     if not type_id:
-        raise Exception("Unknown entity type '{}'".format(entity_type))
+        raise APIException("Unknown entity type '{}'".format(entity_type))
 
     entity_id = await db_api.get_or_create_entity(connection, type_id, entity_token, create_if_none=False)
     if not entity_id:
-        raise Exception("Entity '{}' was not found".format(entity_token))
+        raise APIException("Entity '{}' was not found".format(entity_token))
 
     for item in await db_api.get_entity_comments(connection, entity_id):
         yield {

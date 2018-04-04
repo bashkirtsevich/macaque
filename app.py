@@ -82,6 +82,8 @@ async def upload_comments(connection, request):
         return response
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
+    except api.APIException as e:
+        return web.json_response({"result": "error", "reason": "API error ({})".format(str(e))}, status=500)
     except ValidatorException as e:
         return web.json_response({"result": "error", "error": str(e)}, status=500)
     except Exception as e:
@@ -106,6 +108,8 @@ async def handle_post(connection, request, future):
         return web.json_response({"result": result})
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
+    except api.APIException as e:
+        return web.json_response({"result": "error", "reason": "API error ({})".format(str(e))}, status=500)
     except ValidatorException as e:
         return web.json_response({"result": "error", "error": str(e)}, status=500)
     except Exception as e:

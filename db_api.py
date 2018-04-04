@@ -4,6 +4,8 @@ from sqlalchemy import select, and_, func, desc
 
 from schema import *
 
+class DBException(Exception):
+    pass
 
 async def select_or_insert(connection, query_select, field, query_insert, create_if_none=True):
     ds = await connection.execute(query_select)
@@ -227,4 +229,4 @@ async def get_entity_comments(connection, entity_id):
         for item in ds:
             yield dict(item)
     else:
-        raise Exception("Data not found")
+        raise DBException("Data not found")
