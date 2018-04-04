@@ -112,7 +112,7 @@ async def handle_post(connection, request, future):
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
 
 
-async def main():
+async def run_app():
     db_engine = create_engine(os.getenv("DATABASE_URL"), strategy=ASYNCIO_STRATEGY)
     db_connection = await db_engine.connect()
 
@@ -137,4 +137,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    web.run_app(main())
+    web.run_app(run_app())
