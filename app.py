@@ -14,18 +14,18 @@ class ServerException(Exception):
 add_comment_validator = Validator(
     allow_unknown=False,
     schema={
-        "type": {"type": "str", "required": True},
-        "entity": {"type": "str", "required": True},
-        "user_token": {"type": "str", "required": True},
-        "text": {"type": "str", "required": True}
+        "type": {"type": "string", "required": True},
+        "entity": {"type": "string", "required": True},
+        "user_token": {"type": "string", "required": True},
+        "text": {"type": "string", "required": True}
     })
 
 edit_comment_validator = Validator(
     allow_unknown=False,
     schema={
-        "user": {"type": "str", "required": True},
-        "comment": {"type": "str", "required": True},
-        "text": {"type": "str", "required": True}
+        "user": {"type": "string", "required": True},
+        "comment": {"type": "string", "required": True},
+        "text": {"type": "string", "required": True}
     })
 
 
@@ -81,8 +81,9 @@ async def handle_post(connection, request, future):
 
 
 if __name__ == "__main__":
-    db_engine = create_engine(os.getenv("DATABASE_URL"))
-    db_connection = db_engine.connect()
+    # db_engine = create_engine(os.getenv("DATABASE_URL"))
+    # db_connection = db_engine.connect()
+    db_connection=None
 
     app = web.Application()
     app.router.add_post(
