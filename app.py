@@ -2,54 +2,19 @@ import json
 import os
 
 from aiohttp import web
-from cerberus import Validator
 from sqlalchemy import create_engine
 
 import api
+from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
+    remove_comment_validator, upload_comments_validator, validate_args
 
 
 class ServerException(Exception):
     pass
 
 
-reply_entity_validator = Validator(
-    allow_unknown=False,
-    schema={
-        "type": {"type": "string", "required": True},
-        "entity": {"type": "string", "required": True},
-        "user_token": {"type": "string", "required": True},
-        "text": {"type": "string", "required": True}
-    })
-
-reply_comment_validator = Validator(
-    allow_unknown=False,
-    schema={
-        "comment_token": {"type": "string", "required": True},
-        "user_token": {"type": "string", "required": True},
-        "text": {"type": "string", "required": True}
-    })
-
-edit_comment_validator = Validator(
-    allow_unknown=False,
-    schema={
-        "user_token": {"type": "string", "required": True},
-        "comment_token": {"type": "string", "required": True},
-        "text": {"type": "string", "required": True}
-    })
-
-remove_comment_validator = Validator(
-    allow_unknown=False,
-    schema={
-        "user_token": {"type": "string", "required": True},
-        "comment_token": {"type": "string", "required": True}
-    })
-
-upload_comments_validator = Validator(
-    allow_unknown=False,
-    schema={
-        "type": {"type": "string", "required": True},
-        "entity": {"type": "string", "required": True}
-    })
+async def read_args(request):
+    return {**await request.json(), **dict(request.match_info)}
 
 
 async def reply_entity(connection, data):
@@ -96,25 +61,6 @@ async def remove_comment(connection, data):
     return {"success": True}
 
 
-arg_validators = {
-    reply_entity: reply_entity_validator,
-    reply_comment: reply_comment_validator,
-    edit_comment: edit_comment_validator,
-    remove_comment: remove_comment_validator,
-}
-
-
-def validate_args(data, validator):
-    if not validator.validate(data):
-        raise ServerException(
-            "Invalid arguments ({})".format(validator.errors)
-        )
-
-
-async def read_args(request):
-    return {**await request.json(), **dict(request.match_info)}
-
-
 async def upload_comments(connection, request):
     try:
         data = await read_args(request)
@@ -143,6 +89,14 @@ async def upload_comments(connection, request):
         return web.json_response({"result": "error", "error": str(e)}, status=500)
     except Exception as e:
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
+
+
+arg_validators = {
+    reply_entity: reply_entity_validator,
+    reply_comment: reply_comment_validator,
+    edit_comment: edit_comment_validator,
+    remove_comment: remove_comment_validator,
+}
 
 
 async def handle_post(connection, request, future):
