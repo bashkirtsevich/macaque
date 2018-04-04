@@ -88,4 +88,8 @@ async def get_comments(connection, entity_type, entity_token):
         raise Exception("Entity '{}' was not found".format(entity_token))
 
     for item in db_api.get_entity_comments(connection, entity_id):
-        yield item
+        yield {
+            "text": item["text"],
+            "created": item["created"],
+            "updated": item["updated"],
+        }
