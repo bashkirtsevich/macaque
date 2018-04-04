@@ -61,7 +61,13 @@ async def remove_comment(connection, data):
 
 
 async def read_entity_comments(connection, data):
-    return await api.get_entity_comments(connection, data["type"], data["entity"])
+    return await api.get_entity_comments(
+        connection,
+        entity_type=data["type"],
+        entity_token=data["entity"],
+        limit=int(data.get("limit", "1000")),
+        offset=int(data.get("offset", "0"))
+    )
 
 
 arg_validators = {
@@ -73,7 +79,7 @@ arg_validators = {
 }
 
 
-async def handle_post(connection, request, future):
+async def handle_request(connection, request, future):
     try:
         data = await _read_args(request)
 
@@ -98,24 +104,27 @@ async def run_app():
     app = web.Application()
     app.router.add_post(
         "/api/reply/{type}/{entity}",
-        lambda request: handle_post(db_connection, request, reply_entity)
+        lambda request: handle_request(db_connection, request, reply_entity)
     )
     app.router.add_post(
         "/api/reply/{comment_token}",
-        lambda request: handle_post(db_connection, request, reply_comment)
+        lambda request: handle_request(db_connection, request, reply_comment)
     )
     app.router.add_post(
         "/api/edit/{comment_token}/{user_token}",
-        lambda request: handle_post(db_connection, request, edit_comment)
+        lambda request: handle_request(db_connection, request, edit_comment)
     )
     app.router.add_post(
         "/api/remove/{comment_token}",
-        lambda request: handle_post(db_connection, request, remove_comment)
+        lambda request: handle_request(db_connection, request, remove_comment)
     )
-    app.router.add_get(
-        "/api/comments/{type}/{entity}",
-        lambda request: handle_post(db_connection, request, read_entity_comments)
-    )
+
+    for url in ["/api/comments/{type}/{entity}",
+                "/api/comments/{type}/{entity}/{limit}",
+                "/api/comments/{type}/{entity}/{offset}/{limit}"]:
+        app.router.add_get(
+            url, lambda request: handle_request(db_connection, request, read_entity_comments)
+        )
 
     return app
 

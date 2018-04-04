@@ -182,7 +182,7 @@ async def delete_comment(connection, comment_id):
             return True
 
 
-async def get_entity_comments(connection, entity_id):
+async def get_entity_comments(connection, entity_id, limit, offset):
     comment_text_max_id = select([
         func.max(comment_text.c.id).label("max_id"),
         func.min(comment_text.c.timestamp).label("created"),
@@ -226,6 +226,10 @@ async def get_entity_comments(connection, entity_id):
         )
     ).order_by(
         desc(comment_text_last_data.c.created)
+    ).limit(
+        limit
+    ).offset(
+        offset
     )
 
     ds = await connection.execute(query)

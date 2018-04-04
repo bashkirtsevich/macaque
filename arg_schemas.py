@@ -44,5 +44,7 @@ read_entity_comments_validator = Validator(
     allow_unknown=False,
     schema={
         "type": {"type": "string", "required": True},
-        "entity": {"type": "string", "required": True}
+        "entity": {"type": "string", "required": True},
+        "limit": {"type": "string", "required": False},
+        "offset": {"type": "string", "required": False}
     })

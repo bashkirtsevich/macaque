@@ -82,7 +82,7 @@ async def remove_comment(connection, user_token, comment_unique_key):
         return True
 
 
-async def get_entity_comments(connection, entity_type, entity_token):
+async def get_entity_comments(connection, entity_type, entity_token, limit, offset):
     type_id = await db_api.get_or_create_entity_type(connection, entity_type, create_if_none=False)
     if not type_id:
         raise APIException("Unknown entity type '{}'".format(entity_type))
@@ -96,4 +96,4 @@ async def get_entity_comments(connection, entity_type, entity_token):
         "created": str(item["created"]),
         "updated": str(item["updated"]),
         "user": item["token"]}
-        async for item in db_api.get_entity_comments(connection, entity_id)]
+        async for item in db_api.get_entity_comments(connection, entity_id, limit, offset)]
