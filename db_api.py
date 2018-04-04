@@ -5,21 +5,24 @@ from sqlalchemy import select, and_, func, desc
 from schema import *
 
 
-async def select_or_insert(connection, query_select, field, query_insert):
+async def select_or_insert(connection, query_select, field, query_insert, create_if_none=True):
     ds = await connection.exec(query_select)
 
     if ds.rowcount:
         result = ds.first()[field]
     else:
-        async with connection.begin() as trans:
-            result = await connection.exec(query_insert).inserted_primary_key[0]
+        if create_if_none:
+            async with connection.begin() as trans:
+                result = await connection.exec(query_insert).inserted_primary_key[0]
 
-            await trans.commit()
+                await trans.commit()
+        else:
+            result = None
 
     return result
 
 
-async def get_or_create_entity_type(connection, type_name):
+async def get_or_create_entity_type(connection, type_name, create_if_none=True):
     query_select = select([
         entity_type.c.id.label("type_id")
     ]).select_from(
@@ -32,10 +35,10 @@ async def get_or_create_entity_type(connection, type_name):
         name=type_name.lower()
     )
 
-    return await select_or_insert(connection, query_select, "type_id", query_insert)
+    return await select_or_insert(connection, query_select, "type_id", query_insert, create_if_none)
 
 
-async def get_or_create_entity(connection, type_id, token):
+async def get_or_create_entity(connection, type_id, token, create_if_none=True):
     query_select = select([
         entity.c.id.label("entity_id")
     ]).select_from(
@@ -52,10 +55,10 @@ async def get_or_create_entity(connection, type_id, token):
         token=token
     )
 
-    return await select_or_insert(connection, query_select, "entity_id", query_insert)
+    return await select_or_insert(connection, query_select, "entity_id", query_insert, create_if_none)
 
 
-async def get_or_create_user(connection, token):
+async def get_or_create_user(connection, token, create_if_none=True):
     query_select = select([
         user.c.id.label("user_id")
     ]).select_from(
@@ -68,7 +71,7 @@ async def get_or_create_user(connection, token):
         token=token
     )
 
-    return await select_or_insert(connection, query_select, "user_id", query_insert)
+    return await select_or_insert(connection, query_select, "user_id", query_insert, create_if_none)
 
 
 async def get_user_id_by_token(connection, token):
