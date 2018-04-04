@@ -4,19 +4,23 @@ import db_api
 from utils import sha1
 
 
+def _create_comment_identifiers(text):
+    return str(uuid4()), sha1(text)
+
+
 async def add_comment(connection, entity_type, entity_token, user_token, text):
     entity_type_id = await db_api.get_or_create_entity_type(connection, entity_type)
     entity_id = await db_api.get_or_create_entity(connection, entity_type_id, entity_token)
     user_id = await db_api.get_or_create_user(connection, user_token)
 
-    result = uuid4()
+    result, text_hash = _create_comment_identifiers(text)
     await db_api.insert_comment(
         connection,
         entity_id=entity_id,
         user_id=user_id,
         unique_key=result,
         text=text,
-        text_hash=sha1(text)
+        text_hash=text_hash
     )
 
     return result
@@ -30,14 +34,14 @@ async def reply_comment(connection, parent_comment_token, user_token, text):
 
     user_id = await db_api.get_or_create_user(connection, user_token)
 
-    result = uuid4()
+    result, text_hash = _create_comment_identifiers(text)
     await db_api.insert_comment(
         connection,
         entity_id=comment["entity"],
         user_id=user_id,
         unique_key=result,
         text=text,
-        text_hash=sha1(text),
+        text_hash=text_hash,
         parent_comment_id=comment["id"]
     )
 
