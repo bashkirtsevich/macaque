@@ -16,7 +16,7 @@ add_comment_validator = Validator(
     schema={
         "type": {"type": "string", "required": True},
         "entity": {"type": "string", "required": True},
-        "user_token": {"type": "string", "required": True},
+        "token": {"type": "string", "required": True},
         "text": {"type": "string", "required": True}
     })
 
@@ -30,13 +30,11 @@ edit_comment_validator = Validator(
 
 
 async def add_comment(connection, data):
-    entity = data["entity"]
-
     comment_token = await api.add_comment(
         connection,
-        entity_type=entity["type"],
-        entity_token=entity["token"],
-        user_token=data["user_token"],
+        entity_type=data["type"],
+        entity_token=data["entity"],
+        user_token=data["token"],
         text=data["text"]
     )
 
