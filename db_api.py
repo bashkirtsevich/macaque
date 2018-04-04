@@ -196,16 +196,16 @@ async def get_entity_comments(connection, entity_id):
     ]).select_from(
         comment_text.join(
             comment_text_max_id,
-            and_(
-                comment_text.c.id == comment_text_max_id.c.max_id,
-                comment_text.c.comment == comment_text_max_id.c.comment,
-            )
-
+            comment_text.c.comment == comment_text_max_id.c.comment
         )
+    ).where(
+        comment_text.c.id == comment_text_max_id.c.max_id
     ).alias("comment_text_last_data")
 
     query = select([
-
+        comment_text_last_data.c.text,
+        comment_text_last_data.c.created,
+        comment_text_last_data.c.updated
     ]).select_from(
         comment.join(
             comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
