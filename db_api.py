@@ -9,7 +9,7 @@ async def select_or_insert(connection, query_select, field, query_insert, create
     ds = await connection.execute(query_select)
 
     if ds.rowcount:
-        result = ds.first()[field]
+        result = (await ds.first())[field]
     else:
         if create_if_none:
             async with connection.begin_nested() as trans:
@@ -85,7 +85,7 @@ async def get_user_id_by_token(connection, token):
 
     ds = await connection.execute(query_select)
     if ds.rowcount:
-        return ds.first()["user_id"]
+        return (await ds.first())["user_id"]
     else:
         return None
 
@@ -153,7 +153,7 @@ async def get_comment_by_key(connection, unique_key):
 
     ds = await connection.execute(query)
     if ds.rowcount:
-        return dict(ds.first())
+        return dict(await ds.first())
     else:
         return None
 
