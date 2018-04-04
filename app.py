@@ -44,8 +44,15 @@ remove_comment_validator = Validator(
         "comment_token": {"type": "string", "required": True}
     })
 
+upload_comments_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "type": {"type": "string", "required": True},
+        "entity": {"type": "string", "required": True}
+    })
 
-async def reply_entity(connection, data):
+
+async def reply_entity(connection, data, **kwargs):
     comment_token = await api.add_comment(
         connection,
         entity_type=data["type"],
@@ -57,7 +64,7 @@ async def reply_entity(connection, data):
     return {"comment_token": comment_token}
 
 
-async def reply_comment(connection, data):
+async def reply_comment(connection, data, **kwargs):
     comment_token = await api.reply_comment(
         connection,
         parent_comment_token=data["comment_token"],
@@ -68,7 +75,7 @@ async def reply_comment(connection, data):
     return {"comment_token": comment_token}
 
 
-async def edit_comment(connection, data):
+async def edit_comment(connection, data, **kwargs):
     revision_key = await api.edit_comment(
         connection,
         user_token=data["user_token"],
@@ -79,7 +86,7 @@ async def edit_comment(connection, data):
     return {"success": revision_key is not None}
 
 
-async def remove_comment(connection, data):
+async def remove_comment(connection, data, **kwargs):
     await api.remove_comment(
         connection,
         user_token=data["user_token"],
@@ -89,7 +96,7 @@ async def remove_comment(connection, data):
     return {"success": True}
 
 
-async def upload_comments(connection, request, data):
+async def upload_comments(connection, data, request):
     response = web.StreamResponse(
         status=200,
         reason="OK",
@@ -111,7 +118,8 @@ arg_validators = {
     reply_entity: reply_entity_validator,
     reply_comment: reply_comment_validator,
     edit_comment: edit_comment_validator,
-    remove_comment: remove_comment_validator
+    remove_comment: remove_comment_validator,
+    upload_comments: upload_comments_validator
 }
 
 
@@ -125,7 +133,7 @@ async def handle_post(connection, request, future):
                 "Invalid arguments ({})".format(validator.errors)
             )
 
-        result = await future(connection, data)
+        result = await future(connection, data, request=request)
         return web.json_response({"result": result})
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
