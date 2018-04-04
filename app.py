@@ -132,5 +132,8 @@ if __name__ == "__main__":
     app.router.add_post(
         "/api/remove/{comment_token}", lambda request: handle_post(db_connection, request, remove_comment)
     )
+    app.router.add_get(
+        "/api/comments/{type}/{entity}", lambda request: upload_comments(db_connection, request)
+    )
 
     web.run_app(app)
