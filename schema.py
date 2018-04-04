@@ -11,7 +11,7 @@ entity_type = Table(
 entity = Table(
     "entity", metadata,
     Column("id", Integer, primary_key=True),
-    Column("type", ForeignKey("entity_type.id"), index=True, nullable=False),
+    Column("type", ForeignKey("entity_type.id", ondelete="CASCADE"), index=True, nullable=False),
     Column("token", Text, nullable=False, index=True),
     UniqueConstraint("type", "token"),
 )
@@ -25,16 +25,16 @@ user = Table(
 comment = Table(
     "comment", metadata,
     Column("id", Integer, primary_key=True),
-    Column("entity", ForeignKey("entity.id"), index=True, nullable=False),
-    Column("user", ForeignKey("user.id"), index=True, nullable=False),
-    Column("comment", ForeignKey("comment.id"), index=True),
+    Column("entity", ForeignKey("entity.id", ondelete="CASCADE"), index=True, nullable=False),
+    Column("user", ForeignKey("user.id", ondelete="CASCADE"), index=True, nullable=False),
+    Column("comment", ForeignKey("comment.id", ondelete="CASCADE"), index=True),
     Column("key", Text, index=True),
 )
 
 comment_text = Table(
     "comment_text", metadata,
     Column("id", Integer, primary_key=True),
-    Column("comment", ForeignKey("comment.id"), index=True, nullable=False),
+    Column("comment", ForeignKey("comment.id", ondelete="CASCADE"), index=True, nullable=False),
     Column("timestamp", DateTime, index=True, nullable=False),
     Column("hash", Text, index=True),
     Column("data", Text),
