@@ -11,7 +11,7 @@ class ServerException(Exception):
     pass
 
 
-add_comment_validator = Validator(
+reply_entity_validator = Validator(
     allow_unknown=False,
     schema={
         "type": {"type": "string", "required": True},
@@ -23,13 +23,13 @@ add_comment_validator = Validator(
 edit_comment_validator = Validator(
     allow_unknown=False,
     schema={
-        "user": {"type": "string", "required": True},
-        "comment": {"type": "string", "required": True},
+        "user_token": {"type": "string", "required": True},
+        "comment_token": {"type": "string", "required": True},
         "text": {"type": "string", "required": True}
     })
 
 
-async def add_comment(connection, data):
+async def reply_entity(connection, data):
     comment_token = await api.add_comment(
         connection,
         entity_type=data["type"],
@@ -53,7 +53,7 @@ async def edit_comment(connection, data):
 
 
 arg_validators = {
-    add_comment: add_comment_validator,
+    reply_entity: reply_entity_validator,
     edit_comment: edit_comment_validator
 }
 
@@ -84,10 +84,10 @@ if __name__ == "__main__":
 
     app = web.Application()
     app.router.add_post(
-        "/api/{type}/{entity}/add_comment", lambda request: handle_post(db_connection, request, add_comment)
+        "/api/reply/{type}/{entity}", lambda request: handle_post(db_connection, request, reply_entity)
     )
     app.router.add_post(
-        "/api/{user}/{comment}/edit_comment", lambda request: handle_post(db_connection, request, edit_comment)
+        "/api/edit/{comment_token}/{user_token}", lambda request: handle_post(db_connection, request, edit_comment)
     )
 
     web.run_app(app)
