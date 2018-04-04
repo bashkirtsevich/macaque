@@ -97,19 +97,24 @@ async def run_app():
 
     app = web.Application()
     app.router.add_post(
-        "/api/reply/{type}/{entity}", lambda request: handle_post(db_connection, request, reply_entity)
+        "/api/reply/{type}/{entity}",
+        lambda request: handle_post(db_connection, request, reply_entity)
     )
     app.router.add_post(
-        "/api/reply/{comment_token}", lambda request: handle_post(db_connection, request, reply_comment)
+        "/api/reply/{comment_token}",
+        lambda request: handle_post(db_connection, request, reply_comment)
     )
     app.router.add_post(
-        "/api/edit/{comment_token}/{user_token}", lambda request: handle_post(db_connection, request, edit_comment)
+        "/api/edit/{comment_token}/{user_token}",
+        lambda request: handle_post(db_connection, request, edit_comment)
     )
     app.router.add_post(
-        "/api/remove/{comment_token}", lambda request: handle_post(db_connection, request, remove_comment)
+        "/api/remove/{comment_token}",
+        lambda request: handle_post(db_connection, request, remove_comment)
     )
     app.router.add_get(
-        "/api/comments/{type}/{entity}", lambda request: handle_post(db_connection, request, read_entity_comments)
+        "/api/comments/{type}/{entity}",
+        lambda request: handle_post(db_connection, request, read_entity_comments)
     )
 
     return app
