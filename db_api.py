@@ -6,14 +6,14 @@ from schema import *
 
 
 async def select_or_insert(connection, query_select, field, query_insert, create_if_none=True):
-    ds = await connection.exec(query_select)
+    ds = await connection.execute(query_select)
 
     if ds.rowcount:
         result = ds.first()[field]
     else:
         if create_if_none:
             async with connection.begin() as trans:
-                result = await connection.exec(query_insert).inserted_primary_key[0]
+                result = await connection.execute(query_insert).inserted_primary_key[0]
 
                 await trans.commit()
         else:
@@ -83,7 +83,7 @@ async def get_user_id_by_token(connection, token):
         user.c.token == token
     )
 
-    ds = await connection.exec(query_select)
+    ds = await connection.execute(query_select)
     if ds.rowcount:
         return ds.first()["user_id"]
     else:
@@ -109,7 +109,7 @@ async def add_or_update_comment_text(connection, comment_id, text, text_hash):
 
     async with connection.begin() as trans:
         if await connection.scalar(query) != text_hash:
-            result = await connection.exec(
+            result = await connection.execute(
                 comment_text.insert().values(
                     comment=comment_id,
                     timestamp=datetime.now(),
@@ -127,7 +127,7 @@ async def add_or_update_comment_text(connection, comment_id, text, text_hash):
 
 async def insert_comment(connection, entity_id, user_id, unique_key, text, text_hash, parent_comment_id=None):
     async with connection.begin() as trans:
-        result = await connection.exec(
+        result = await connection.execute(
             comment.insert().values(
                 entity=entity_id,
                 user=user_id,
@@ -152,7 +152,7 @@ async def get_comment_by_key(connection, unique_key):
         comment.c.key == unique_key
     )
 
-    ds = await connection.exec(query)
+    ds = await connection.execute(query)
     if ds.rowcount:
         return dict(ds.first())
     else:
@@ -168,7 +168,7 @@ async def delete_comment(connection, comment_id):
         if await connection.scalar(query) > 0:
             return False
         else:
-            await connection.exec(
+            await connection.execute(
                 comment.delete().where(
                     comment=comment_id
                 )
@@ -222,7 +222,7 @@ async def get_entity_comments(connection, entity_id):
         desc(comment_text_last_data.c.created)
     )
 
-    ds = await connection.exec(query)
+    ds = await connection.execute(query)
 
     if ds.rowcount:
         for item in ds:
