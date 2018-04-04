@@ -1,6 +1,16 @@
 from cerberus import Validator
 
-from app import ServerException
+
+class ValidatorException(Exception):
+    pass
+
+
+def validate_args(data, validator):
+    if not validator.validate(data):
+        raise ValidatorException(
+            "Invalid arguments ({})".format(validator.errors)
+        )
+
 
 reply_entity_validator = Validator(
     allow_unknown=False,
@@ -36,10 +46,3 @@ upload_comments_validator = Validator(
         "type": {"type": "string", "required": True},
         "entity": {"type": "string", "required": True}
     })
-
-
-def validate_args(data, validator):
-    if not validator.validate(data):
-        raise ServerException(
-            "Invalid arguments ({})".format(validator.errors)
-        )

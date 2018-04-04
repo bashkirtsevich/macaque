@@ -6,11 +6,7 @@ from sqlalchemy import create_engine
 
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
-    remove_comment_validator, upload_comments_validator, validate_args
-
-
-class ServerException(Exception):
-    pass
+    remove_comment_validator, upload_comments_validator, validate_args, ValidatorException
 
 
 async def _read_args(request):
@@ -85,7 +81,7 @@ async def upload_comments(connection, request):
         return response
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
-    except ServerException as e:
+    except ValidatorException as e:
         return web.json_response({"result": "error", "error": str(e)}, status=500)
     except Exception as e:
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
@@ -109,7 +105,7 @@ async def handle_post(connection, request, future):
         return web.json_response({"result": result})
     except TimeoutError:
         return web.json_response({"result": "error", "reasons": "Request timeout expired"}, status=500)
-    except ServerException as e:
+    except ValidatorException as e:
         return web.json_response({"result": "error", "error": str(e)}, status=500)
     except Exception as e:
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
