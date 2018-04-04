@@ -12,8 +12,8 @@ async def select_or_insert(connection, query_select, field, query_insert, create
         result = ds.first()[field]
     else:
         if create_if_none:
-            async with connection.begin() as trans:
-                result = await connection.execute(query_insert).inserted_primary_key[0]
+            async with connection.begin_nested() as trans:
+                result = (await connection.execute(query_insert)).inserted_primary_key[0]
 
                 await trans.commit()
         else:
@@ -107,16 +107,16 @@ async def add_or_update_comment_text(connection, comment_id, text, text_hash):
         comment_text.c.id == subquery.c.max_id
     )
 
-    async with connection.begin() as trans:
+    async with connection.begin_nested() as trans:
         if await connection.scalar(query) != text_hash:
-            result = await connection.execute(
+            result = (await connection.execute(
                 comment_text.insert().values(
                     comment=comment_id,
                     timestamp=datetime.now(),
                     hash=text_hash,
                     data=text
                 )
-            ).inserted_primary_key[0]
+            )).inserted_primary_key[0]
 
             await trans.commit()
 
@@ -126,16 +126,15 @@ async def add_or_update_comment_text(connection, comment_id, text, text_hash):
 
 
 async def insert_comment(connection, entity_id, user_id, unique_key, text, text_hash, parent_comment_id=None):
-    async with connection.begin() as trans:
-        result = await connection.execute(
+    async with connection.begin_nested() as trans:
+        result = (await connection.execute(
             comment.insert().values(
                 entity=entity_id,
                 user=user_id,
                 key=unique_key,
                 comment=parent_comment_id
             )
-        ).inserted_primary_key[0]
-
+        )).inserted_primary_key[0]
         await add_or_update_comment_text(connection, result, text, text_hash)
 
         await trans.commit()
@@ -164,7 +163,7 @@ async def delete_comment(connection, comment_id):
         comment.c.comment == comment_id
     )
 
-    async with connection.begin() as trans:
+    async with connection.begin_nested() as trans:
         if await connection.scalar(query) > 0:
             return False
         else:
