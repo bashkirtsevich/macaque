@@ -36,6 +36,13 @@ edit_comment_validator = Validator(
         "text": {"type": "string", "required": True}
     })
 
+remove_comment_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "user_token": {"type": "string", "required": True},
+        "comment_token": {"type": "string", "required": True}
+    })
+
 
 async def reply_entity(connection, data):
     comment_token = await api.add_comment(
@@ -71,10 +78,21 @@ async def edit_comment(connection, data):
     return {"success": revision_key is not None}
 
 
+async def remove_comment(connection, data):
+    await api.remove_comment(
+        connection,
+        user_token=data["user_token"],
+        comment_unique_key=data["comment_token"]
+    )
+
+    return {"success": True}
+
+
 arg_validators = {
     reply_entity: reply_entity_validator,
     reply_comment: reply_comment_validator,
-    edit_comment: edit_comment_validator
+    edit_comment: edit_comment_validator,
+    remove_comment: remove_comment_validator
 }
 
 
@@ -111,6 +129,9 @@ if __name__ == "__main__":
     )
     app.router.add_post(
         "/api/edit/{comment_token}/{user_token}", lambda request: handle_post(db_connection, request, edit_comment)
+    )
+    app.router.add_post(
+        "/api/remove/{comment_token}", lambda request: handle_post(db_connection, request, remove_comment)
     )
 
     web.run_app(app)
