@@ -106,7 +106,7 @@ async def upload_comments(connection, data, request):
     await response.prepare(request)
     await response.write(b"[")
 
-    for index, item in enumerate(api.get_comments(connection, None, None)):
+    for index, item in enumerate(api.get_comments(connection, data["type"], data["entity"])):
         response_str = "{}{}".format("," if index > 0 else "", json.dumps(item))
         await response.write(response_str.encode("utf-8"))
 
