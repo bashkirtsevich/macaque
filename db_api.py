@@ -216,12 +216,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         comment_text.c.id == comment_text_max_id.c.max_id
     ).alias("comment_text_last_data")
 
-    parent_comment = select([
-        comment.c.id,
-        comment.c.key
-    ]).select_from(
-        comment
-    ).alial("parent_comment")
+    comment2 = comment.alias("comment2")
 
     query = select([
         comment_text_last_data.c.text,
@@ -229,7 +224,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         comment_text_last_data.c.updated,
         user.c.token,
         comment.c.key,
-        parent_comment.c.key.label("parent_key")
+        comment2.c.key.label("parent_key")
     ]).select_from(
         comment.join(
             comment_text_last_data,
@@ -237,8 +232,8 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         ).join(
             user, user.c.id == comment.c.user
         ).join(
-            parent_comment,
-            parent_comment.c.id == comment.c.comment,
+            comment2,
+            comment2.c.id == comment.c.comment,
             isouter=True
         )
     ).where(
