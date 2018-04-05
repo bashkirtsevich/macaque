@@ -222,7 +222,7 @@ async def get_entity_comments(connection, entity_id, limit, offset):
     ).where(
         and_(
             comment.c.entity == entity_id,
-            comment.c.comment == None
+            comment.c.comment.is_(None)
         )
     ).order_by(
         desc(comment_text_last_data.c.created)
