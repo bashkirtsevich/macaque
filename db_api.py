@@ -183,6 +183,14 @@ async def delete_comment(connection, comment_id):
 
 
 async def get_entity_comments(connection, entity_id, with_replies, limit, offset):
+    if with_replies:
+        where_clause = comment.c.entity == entity_id
+    else:
+        where_clause = and_(
+            comment.c.entity == entity_id,
+            comment.c.comment.is_(None)
+        )
+
     comment_text_max_id = select([
         func.max(comment_text.c.id).label("max_id"),
         func.min(comment_text.c.timestamp).label("created"),
@@ -220,10 +228,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
             user, user.c.id == comment.c.user
         )
     ).where(
-        and_(
-            comment.c.entity == entity_id,
-            comment.c.comment.is_(None)
-        )
+        where_clause
     ).order_by(
         desc(comment_text_last_data.c.created)
     ).limit(
