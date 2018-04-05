@@ -110,8 +110,8 @@ async def get_user_comments(connection, user_token, limit=0, offset=0):
         "text": item["text"],
         "created": str(item["created"]),
         "updated": str(item["updated"]),
-        "entity_type": str(item["entity_type"]),
-        "entity_token": str(item["entity_token"])}
+        "entity_type": item["entity_type"],
+        "entity_token": item["entity_token"]}
         async for item in db_api.get_user_comments(connection, user_id, limit, offset)]
 
 
