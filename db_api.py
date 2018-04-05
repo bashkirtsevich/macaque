@@ -182,12 +182,12 @@ async def delete_comment(connection, comment_id):
             return True
 
 
-async def get_entity_comments(connection, entity_id, with_replies, limit, offset):
-    if with_replies:
-        where_clause = comment.c.entity == entity_id
-    else:
-        where_clause = and_(
-            comment.c.entity == entity_id,
+async def get_entity_comments(connection, entity_id, with_replies, limit, offset, timestamp_from=None,
+                              timestamp_to=None):
+    comment_where_clause = comment.c.entity == entity_id
+    if not with_replies:
+        comment_where_clause = and_(
+            comment_where_clause,
             comment.c.comment.is_(None)
         )
 
@@ -202,6 +202,20 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         comment_text.c.comment
     ).alias("comment_text_max_id")
 
+    text_data_where_clause = comment_text.c.id == comment_text_max_id.c.max_id
+
+    if timestamp_from:
+        text_data_where_clause = and_(
+            text_data_where_clause,
+            comment_text_max_id.c.created >= timestamp_from
+        )
+
+    if timestamp_to:
+        text_data_where_clause = and_(
+            text_data_where_clause,
+            comment_text_max_id.c.created <= timestamp_from
+        )
+
     comment_text_last_data = select([
         comment_text.c.data.label("text"),
         comment_text_max_id.c.created,
@@ -213,7 +227,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
             comment_text.c.comment == comment_text_max_id.c.comment
         )
     ).where(
-        comment_text.c.id == comment_text_max_id.c.max_id
+        text_data_where_clause
     ).alias("comment_text_last_data")
 
     comment2 = comment.alias("comment2")
@@ -237,7 +251,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
             isouter=True
         )
     ).where(
-        where_clause
+        comment_where_clause
     ).order_by(
         desc(comment_text_last_data.c.created)
     )
@@ -257,7 +271,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         raise DBException("Data not found")
 
 
-async def get_user_comments(connection, user_id, limit, offset):
+async def get_user_comments(connection, user_id, limit, offset, timestamp_from=None, timestamp_to=None):
     comment_text_max_id = select([
         func.max(comment_text.c.id).label("max_id"),
         func.min(comment_text.c.timestamp).label("created"),
@@ -283,6 +297,20 @@ async def get_user_comments(connection, user_id, limit, offset):
         comment_text.c.id == comment_text_max_id.c.max_id
     ).alias("comment_text_last_data")
 
+    text_data_where_clause = comment_text_last_data.c.comment == comment.c.id
+
+    if timestamp_from:
+        text_data_where_clause = and_(
+            text_data_where_clause,
+            comment_text_max_id.c.created >= timestamp_from
+        )
+
+    if timestamp_to:
+        text_data_where_clause = and_(
+            text_data_where_clause,
+            comment_text_max_id.c.created <= timestamp_from
+        )
+
     query = select([
         comment_text_last_data.c.text,
         comment_text_last_data.c.created,
@@ -291,7 +319,7 @@ async def get_user_comments(connection, user_id, limit, offset):
         entity_type.c.name.label("entity_token")
     ]).select_from(
         comment.join(
-            comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
+            comment_text_last_data, text_data_where_clause
         ).join(
             entity, entity.c.id == comment.c.entity
         ).join(

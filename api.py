@@ -82,7 +82,8 @@ async def remove_comment(connection, user_token, comment_unique_key):
         return True
 
 
-async def get_entity_comments(connection, entity_type, entity_token, limit, offset, with_replies):
+async def get_entity_comments(connection, entity_type, entity_token, limit, offset, with_replies,
+                              timestamp_from=None, timestamp_to=None):
     type_id = await db_api.get_or_create_entity_type(connection, entity_type, create_if_none=False)
     if not type_id:
         raise APIException("Unknown entity type '{}'".format(entity_type))
@@ -91,7 +92,8 @@ async def get_entity_comments(connection, entity_type, entity_token, limit, offs
     if not entity_id:
         raise APIException("Entity '{}' was not found".format(entity_token))
 
-    async for item in db_api.get_entity_comments(connection, entity_id, with_replies, limit, offset):
+    async for item in db_api.get_entity_comments(connection, entity_id, with_replies, limit, offset,
+                                                 timestamp_from, timestamp_to):
         yield {
             "text": item["text"],
             "created": str(item["created"]),
@@ -102,12 +104,12 @@ async def get_entity_comments(connection, entity_type, entity_token, limit, offs
         }
 
 
-async def get_user_comments(connection, user_token, limit=0, offset=0):
+async def get_user_comments(connection, user_token, limit=0, offset=0, timestamp_from=None, timestamp_to=None):
     user_id = await db_api.get_user_id_by_token(connection, user_token)
     if not user_id:
         raise APIException("User '{}' not found".format(user_token))
 
-    async for item in db_api.get_user_comments(connection, user_id, limit, offset):
+    async for item in db_api.get_user_comments(connection, user_id, limit, offset, timestamp_from, timestamp_to):
         yield {
             "text": item["text"],
             "created": str(item["created"]),
