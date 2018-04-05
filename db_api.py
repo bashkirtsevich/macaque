@@ -221,7 +221,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         comment.c.key
     ]).select_from(
         comment
-    )
+    ).alial("parent_comment")
 
     query = select([
         comment_text_last_data.c.text,
