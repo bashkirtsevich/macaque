@@ -7,7 +7,10 @@ from sqlalchemy_aio import ASYNCIO_STRATEGY
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
     remove_comment_validator, read_entity_comments_validator, validate_args, ValidatorException, \
-    read_user_comments_validator, read_comment_replies_validator, read_entity_replies_validator
+    read_user_comments_validator, read_comment_replies_validator, read_entity_replies_validator, \
+    stream_user_comments_validator, stream_entity_replies_validator
+from response_streamer import XMLStreamer
+from utils import parse_datetime
 
 
 async def _read_args(request):
@@ -135,6 +138,63 @@ async def handle_request(connection, request, future):
         return web.json_response({"error": "Internal server error ({})".format(str(e))}, status=500)
 
 
+async def stream_user_comments(connection, data):
+    idx = 1
+    async for item in api.get_user_comments(
+            connection,
+            user_token=data["user_token"],
+            timestamp_from=parse_datetime(data.get("timestamp_from", None)),
+            timestamp_to=parse_datetime(data.get("timestamp_to", None))
+    ):
+        yield {"record{}".format(idx): item}
+        idx += 1
+
+
+async def stream_entity_replies(connection, data):
+    idx = 1
+    async for item in api.get_entity_comments(
+            connection,
+            entity_type=data["type"],
+            entity_token=data["entity"],
+            limit=0,
+            offset=0,
+            timestamp_from=parse_datetime(data.get("timestamp_from", None)),
+            timestamp_to=parse_datetime(data.get("timestamp_to", None)),
+            with_replies=True
+    ):
+        yield {"record{}".format(idx): item}
+        idx += 1
+
+
+streamer_arg_validators = {
+    stream_user_comments: stream_user_comments_validator,
+    stream_entity_replies: stream_entity_replies_validator
+}
+
+
+async def handle_stream(connection, request, future):
+    data = await _read_args(request)
+
+    validate_args(data, streamer_arg_validators[future])
+
+    response = web.StreamResponse(
+        status=200,
+        reason="OK",
+        headers={"Content-Type": "application/octet-stream"}
+    )
+
+    streamer = XMLStreamer(response)
+
+    await response.prepare(request)
+
+    await streamer.write_head()
+    async for item in future(connection, data):
+        await streamer.write_body(item)
+    await streamer.write_tail()
+
+    return response
+
+
 async def run_app():
     db_engine = create_engine(os.getenv("DATABASE_URL"), strategy=ASYNCIO_STRATEGY)
     db_connection = await db_engine.connect()
@@ -176,6 +236,22 @@ async def run_app():
         "/api/replies/{type}/{entity}",
         lambda request: handle_request(db_connection, request, read_entity_replies)
     )
+
+    for url in ["/api/user/download/{user_token}",
+                "/api/user/download/{user_token}/{timestamp_from}",
+                "/api/user/download/{user_token}/{timestamp_from}/{timestamp_to}"]:
+        app.router.add_get(
+            url,
+            lambda request: handle_stream(db_connection, request, stream_user_comments)
+        )
+
+    for url in ["/api/download/{type}/{entity}",
+                "/api/download/{type}/{entity}/{timestamp_from}",
+                "/api/download/{type}/{entity}/{timestamp_from}/{timestamp_to}"]:
+        app.router.add_get(
+            url,
+            lambda request: handle_stream(db_connection, request, stream_entity_replies)
+        )
 
     return app
 

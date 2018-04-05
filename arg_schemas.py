@@ -59,3 +59,18 @@ read_comment_replies_validator = Validator(
     schema={
         "comment_token": {"type": "string", "required": True}
     })
+stream_user_comments_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "user_token": {"type": "string", "required": True},
+        "timestamp_from": {"type": "string", "required": False},
+        "timestamp_to": {"type": "string", "required": False}
+    })
+stream_entity_replies_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "type": {"type": "string", "required": True},
+        "entity": {"type": "string", "required": True},
+        "timestamp_from": {"type": "string", "required": False},
+        "timestamp_to": {"type": "string", "required": False}
+    })
