@@ -213,7 +213,7 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
     if timestamp_to:
         text_data_where_clause = and_(
             text_data_where_clause,
-            comment_text_max_id.c.created <= timestamp_from
+            comment_text_max_id.c.created <= timestamp_to
         )
 
     comment_text_last_data = select([
@@ -308,7 +308,7 @@ async def get_user_comments(connection, user_id, limit, offset, timestamp_from=N
     if timestamp_to:
         text_data_where_clause = and_(
             text_data_where_clause,
-            comment_text_max_id.c.created <= timestamp_from
+            comment_text_max_id.c.created <= timestamp_to
         )
 
     query = select([
