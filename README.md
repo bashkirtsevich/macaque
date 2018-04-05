@@ -1,4 +1,6 @@
 # Macaque
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/70c7df3034b14a38921807023cf13e55)](https://www.codacy.com/app/bashkirtsevich/macaque?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bashkirtsevich/macaque&amp;utm_campaign=Badge_Grade)
+
 Macaque -- сервер комментариев, выполняет задачи хранения комментариев к произвольным сущностям, а так же ведение истории изменений комментариев.
 
 Сервис предоставляет возможность задать комментарий на какую-либо сущность, которая задается парой «тип» и «токен»; так же сервис предоставляет возможность отвечать на комментарии.
