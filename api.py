@@ -95,7 +95,9 @@ async def get_entity_comments(connection, entity_type, entity_token, limit, offs
         "text": item["text"],
         "created": str(item["created"]),
         "updated": str(item["updated"]),
-        "user": item["token"]}
+        "user": item["token"],
+        "key": item["key"],
+        "parent_key": item["parent_key"]}
         async for item in db_api.get_entity_comments(connection, entity_id, with_replies, limit, offset)]
 
 

@@ -216,16 +216,30 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         comment_text.c.id == comment_text_max_id.c.max_id
     ).alias("comment_text_last_data")
 
+    parent_comment = select([
+        comment.c.id,
+        comment.c.key
+    ]).select_from(
+        comment
+    )
+
     query = select([
         comment_text_last_data.c.text,
         comment_text_last_data.c.created,
         comment_text_last_data.c.updated,
-        user.c.token
+        user.c.token,
+        comment.c.key,
+        parent_comment.c.key.label("parent_key")
     ]).select_from(
         comment.join(
-            comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
+            comment_text_last_data,
+            comment_text_last_data.c.comment == comment.c.id
         ).join(
             user, user.c.id == comment.c.user
+        ).join(
+            parent_comment,
+            parent_comment.c.id == comment.c.comment,
+            isouter=True
         )
     ).where(
         where_clause
