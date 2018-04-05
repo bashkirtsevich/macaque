@@ -91,14 +91,15 @@ async def get_entity_comments(connection, entity_type, entity_token, limit, offs
     if not entity_id:
         raise APIException("Entity '{}' was not found".format(entity_token))
 
-    return [{
-        "text": item["text"],
-        "created": str(item["created"]),
-        "updated": str(item["updated"]),
-        "user": item["token"],
-        "key": item["key"],
-        "parent_key": item["parent_key"]}
-        async for item in db_api.get_entity_comments(connection, entity_id, with_replies, limit, offset)]
+    async for item in db_api.get_entity_comments(connection, entity_id, with_replies, limit, offset):
+        yield {
+            "text": item["text"],
+            "created": str(item["created"]),
+            "updated": str(item["updated"]),
+            "user": item["token"],
+            "key": item["key"],
+            "parent_key": item["parent_key"]
+        }
 
 
 async def get_user_comments(connection, user_token, limit=0, offset=0):
@@ -106,13 +107,14 @@ async def get_user_comments(connection, user_token, limit=0, offset=0):
     if not user_id:
         raise APIException("User '{}' not found".format(user_token))
 
-    return [{
-        "text": item["text"],
-        "created": str(item["created"]),
-        "updated": str(item["updated"]),
-        "entity_type": item["entity_type"],
-        "entity_token": item["entity_token"]}
-        async for item in db_api.get_user_comments(connection, user_id, limit, offset)]
+    async for item in db_api.get_user_comments(connection, user_id, limit, offset):
+        yield {
+            "text": item["text"],
+            "created": str(item["created"]),
+            "updated": str(item["updated"]),
+            "entity_type": item["entity_type"],
+            "entity_token": item["entity_token"]
+        }
 
 
 async def get_comment_replies(connection, comment_token, limit=0, offset=0):
@@ -120,11 +122,12 @@ async def get_comment_replies(connection, comment_token, limit=0, offset=0):
     if not comment:
         raise APIException("Comment '{}' not found".format(comment_token))
 
-    return [{
-        "text": item["text"],
-        "created": str(item["created"]),
-        "updated": str(item["updated"]),
-        "key": item["key"],
-        "parent_key": item["parent_key"],
-        "user_token": item["user"]}
-        async for item in db_api.get_comment_replies(connection, comment["id"], limit, offset)]
+    async for item in db_api.get_comment_replies(connection, comment["id"], limit, offset):
+        yield {
+            "text": item["text"],
+            "created": str(item["created"]),
+            "updated": str(item["updated"]),
+            "key": item["key"],
+            "parent_key": item["parent_key"],
+            "user_token": item["user"]
+        }

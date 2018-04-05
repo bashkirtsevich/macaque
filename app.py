@@ -62,39 +62,47 @@ async def remove_comment(connection, data):
 
 
 async def read_entity_comments(connection, data):
-    return await api.get_entity_comments(
-        connection,
-        entity_type=data["type"],
-        entity_token=data["entity"],
-        limit=int(data.get("limit", "1000")),
-        offset=int(data.get("offset", "0")),
-        with_replies=False
-    )
+    return [
+        item async for item in api.get_entity_comments(
+            connection,
+            entity_type=data["type"],
+            entity_token=data["entity"],
+            limit=int(data.get("limit", "1000")),
+            offset=int(data.get("offset", "0")),
+            with_replies=False
+        )
+    ]
 
 
 async def read_entity_replies(connection, data):
-    return await api.get_entity_comments(
-        connection,
-        entity_type=data["type"],
-        entity_token=data["entity"],
-        limit=int(data.get("limit", "1000")),
-        offset=int(data.get("offset", "0")),
-        with_replies=True
-    )
+    return [
+        item async for item in api.get_entity_comments(
+            connection,
+            entity_type=data["type"],
+            entity_token=data["entity"],
+            limit=int(data.get("limit", "1000")),
+            offset=int(data.get("offset", "0")),
+            with_replies=True
+        )
+    ]
 
 
 async def read_user_comments(connection, data):
-    return await api.get_user_comments(
-        connection,
-        user_token=data["user_token"]
-    )
+    return [
+        item async for item in api.get_user_comments(
+            connection,
+            user_token=data["user_token"]
+        )
+    ]
 
 
 async def read_comment_replies(connection, data):
-    return await api.get_comment_replies(
-        connection,
-        comment_token=data["comment_token"]
-    )
+    return [
+        item async for item in api.get_comment_replies(
+            connection,
+            comment_token=data["comment_token"]
+        )
+    ]
 
 
 arg_validators = {
