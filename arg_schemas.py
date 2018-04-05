@@ -48,8 +48,14 @@ read_entity_comments_validator = Validator(
         "limit": {"type": "string", "required": False},
         "offset": {"type": "string", "required": False}
     })
+read_entity_replies_validator = read_entity_comments_validator
 read_user_comments_validator = Validator(
     allow_unknown=False,
     schema={
         "user_token": {"type": "string", "required": True}
+    })
+read_comment_replies_validator = Validator(
+    allow_unknown=False,
+    schema={
+        "comment_token": {"type": "string", "required": True}
     })

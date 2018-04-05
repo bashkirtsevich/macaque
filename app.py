@@ -7,7 +7,7 @@ from sqlalchemy_aio import ASYNCIO_STRATEGY
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
     remove_comment_validator, read_entity_comments_validator, validate_args, ValidatorException, \
-    read_user_comments_validator
+    read_user_comments_validator, read_comment_replies_validator, read_entity_replies_validator
 
 
 async def _read_args(request):
@@ -67,7 +67,19 @@ async def read_entity_comments(connection, data):
         entity_type=data["type"],
         entity_token=data["entity"],
         limit=int(data.get("limit", "1000")),
-        offset=int(data.get("offset", "0"))
+        offset=int(data.get("offset", "0")),
+        with_replies=False
+    )
+
+
+async def read_entity_replies(connection, data):
+    return await api.get_entity_comments(
+        connection,
+        entity_type=data["type"],
+        entity_token=data["entity"],
+        limit=int(data.get("limit", "1000")),
+        offset=int(data.get("offset", "0")),
+        with_replies=True
     )
 
 
@@ -78,6 +90,13 @@ async def read_user_comments(connection, data):
     )
 
 
+async def read_comment_replies(connection, data):
+    return await api.get_comment_replies(
+        connection,
+        comment_token=data["comment_token"]
+    )
+
+
 arg_validators = {
     reply_entity: reply_entity_validator,
     reply_comment: reply_comment_validator,
@@ -85,6 +104,8 @@ arg_validators = {
     remove_comment: remove_comment_validator,
     read_entity_comments: read_entity_comments_validator,
     read_user_comments: read_user_comments_validator,
+    read_comment_replies: read_comment_replies_validator,
+    read_entity_replies: read_entity_replies_validator
 }
 
 
@@ -138,6 +159,14 @@ async def run_app():
     app.router.add_get(
         "/api/comments/{user_token}",
         lambda request: handle_request(db_connection, request, read_user_comments)
+    )
+    app.router.add_get(
+        "/api/replies/{comment_token}",
+        lambda request: handle_request(db_connection, request, read_comment_replies)
+    )
+    app.router.add_get(
+        "/api/replies/{type}/{entity}",
+        lambda request: handle_request(db_connection, request, read_entity_replies)
     )
 
     return app

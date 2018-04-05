@@ -182,7 +182,7 @@ async def delete_comment(connection, comment_id):
             return True
 
 
-async def get_entity_comments(connection, entity_id, limit, offset):
+async def get_entity_comments(connection, entity_id, with_replies, limit, offset):
     comment_text_max_id = select([
         func.max(comment_text.c.id).label("max_id"),
         func.min(comment_text.c.timestamp).label("created"),
@@ -290,6 +290,66 @@ async def get_user_comments(connection, user_id, limit, offset):
     ).offset(
         offset
     )
+
+    ds = await connection.execute(query)
+
+    if ds.rowcount:
+        async for item in ds:
+            yield dict(item)
+    else:
+        raise DBException("Data not found")
+
+
+async def get_comment_replays(connection, comment_id, limit, offset):
+    # comment_text_max_id = select([
+    #     func.max(comment_text.c.id).label("max_id"),
+    #     func.min(comment_text.c.timestamp).label("created"),
+    #     func.max(comment_text.c.timestamp).label("updated"),
+    #     comment_text.c.comment
+    # ]).select_from(
+    #     comment_text
+    # ).group_by(
+    #     comment_text.c.comment
+    # ).alias("comment_text_max_id")
+    #
+    # comment_text_last_data = select([
+    #     comment_text.c.data.label("text"),
+    #     comment_text_max_id.c.created,
+    #     comment_text_max_id.c.updated,
+    #     comment_text.c.comment
+    # ]).select_from(
+    #     comment_text.join(
+    #         comment_text_max_id,
+    #         comment_text.c.comment == comment_text_max_id.c.comment
+    #     )
+    # ).where(
+    #     comment_text.c.id == comment_text_max_id.c.max_id
+    # ).alias("comment_text_last_data")
+    #
+    # query = select([
+    #     comment_text_last_data.c.text,
+    #     comment_text_last_data.c.created,
+    #     comment_text_last_data.c.updated,
+    #     entity.c.token.label("entity_type"),
+    #     entity_type.c.name.label("entity_token")
+    # ]).select_from(
+    #     comment.join(
+    #         comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
+    #     ).join(
+    #         entity, entity.c.id == comment.c.entity
+    #     ).join(
+    #         entity_type, entity_type.c.id == entity.c.type
+    #     )
+    # ).where(
+    #     comment.c.user == user_id
+    # ).order_by(
+    #     desc(comment_text_last_data.c.created)
+    # ).limit(
+    #     limit
+    # ).offset(
+    #     offset
+    # )
+    query = None
 
     ds = await connection.execute(query)
 
