@@ -97,3 +97,17 @@ async def get_entity_comments(connection, entity_type, entity_token, limit, offs
         "updated": str(item["updated"]),
         "user": item["token"]}
         async for item in db_api.get_entity_comments(connection, entity_id, limit, offset)]
+
+
+async def get_user_comments(connection, user_token, limit=0, offset=0):
+    user_id = await db_api.get_user_id_by_token(connection, user_token)
+    if not user_id:
+        raise APIException("User '{}' not found".format(user_token))
+
+    return [{
+        "text": item["text"],
+        "created": str(item["created"]),
+        "updated": str(item["updated"]),
+        "entity_type": str(item["entity_type"]),
+        "entity_token": str(item["entity_token"])}
+        async for item in db_api.get_user_comments(connection, user_id, limit, offset)]

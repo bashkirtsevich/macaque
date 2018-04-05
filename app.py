@@ -6,7 +6,8 @@ from sqlalchemy_aio import ASYNCIO_STRATEGY
 
 import api
 from arg_schemas import reply_entity_validator, reply_comment_validator, edit_comment_validator, \
-    remove_comment_validator, read_entity_comments_validator, validate_args, ValidatorException
+    remove_comment_validator, read_entity_comments_validator, validate_args, ValidatorException, \
+    read_user_comments_validator
 
 
 async def _read_args(request):
@@ -70,12 +71,20 @@ async def read_entity_comments(connection, data):
     )
 
 
+async def read_user_comments(connection, data):
+    return await api.get_user_comments(
+        connection,
+        user_token=data["user_token"]
+    )
+
+
 arg_validators = {
     reply_entity: reply_entity_validator,
     reply_comment: reply_comment_validator,
     edit_comment: edit_comment_validator,
     remove_comment: remove_comment_validator,
     read_entity_comments: read_entity_comments_validator,
+    read_user_comments: read_user_comments_validator,
 }
 
 
@@ -125,6 +134,11 @@ async def run_app():
         app.router.add_get(
             url, lambda request: handle_request(db_connection, request, read_entity_comments)
         )
+
+    app.router.add_get(
+        "/api/comments/{user_token}",
+        lambda request: handle_request(db_connection, request, read_user_comments)
+    )
 
     return app
 
