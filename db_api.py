@@ -314,7 +314,7 @@ async def get_user_comments(connection, user_id, limit, offset):
         raise DBException("Data not found")
 
 
-async def get_comment_replays(connection, comment_id, limit, offset):
+async def get_comment_replies(connection, comment_id, limit, offset):
     # comment_text_max_id = select([
     #     func.max(comment_text.c.id).label("max_id"),
     #     func.min(comment_text.c.timestamp).label("created"),
