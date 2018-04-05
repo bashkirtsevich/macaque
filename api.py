@@ -123,5 +123,8 @@ async def get_comment_replies(connection, comment_token, limit=0, offset=0):
     return [{
         "text": item["text"],
         "created": str(item["created"]),
-        "updated": str(item["updated"])}
+        "updated": str(item["updated"]),
+        "key": str(item["key"]),
+        "parent_key": str(item["parent_key"]),
+        "user_token": str(item["user"])}
         async for item in db_api.get_comment_replies(connection, comment["id"], limit, offset)]

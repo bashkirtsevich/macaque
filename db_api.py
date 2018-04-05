@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, and_, func, desc
+from sqlalchemy import select, and_, func, desc, null
 
 from schema import *
 
@@ -240,11 +240,13 @@ async def get_entity_comments(connection, entity_id, with_replies, limit, offset
         where_clause
     ).order_by(
         desc(comment_text_last_data.c.created)
-    ).limit(
-        limit
-    ).offset(
-        offset
     )
+
+    if limit:
+        query = query.limit(limit)
+
+    if offset:
+        query = query.offset(offset)
 
     ds = await connection.execute(query)
 
@@ -299,11 +301,13 @@ async def get_user_comments(connection, user_id, limit, offset):
         comment.c.user == user_id
     ).order_by(
         desc(comment_text_last_data.c.created)
-    ).limit(
-        limit
-    ).offset(
-        offset
     )
+
+    if limit:
+        query = query.limit(limit)
+
+    if offset:
+        query = query.offset(offset)
 
     ds = await connection.execute(query)
 
@@ -315,55 +319,77 @@ async def get_user_comments(connection, user_id, limit, offset):
 
 
 async def get_comment_replies(connection, comment_id, limit, offset):
-    # comment_text_max_id = select([
-    #     func.max(comment_text.c.id).label("max_id"),
-    #     func.min(comment_text.c.timestamp).label("created"),
-    #     func.max(comment_text.c.timestamp).label("updated"),
-    #     comment_text.c.comment
-    # ]).select_from(
-    #     comment_text
-    # ).group_by(
-    #     comment_text.c.comment
-    # ).alias("comment_text_max_id")
-    #
-    # comment_text_last_data = select([
-    #     comment_text.c.data.label("text"),
-    #     comment_text_max_id.c.created,
-    #     comment_text_max_id.c.updated,
-    #     comment_text.c.comment
-    # ]).select_from(
-    #     comment_text.join(
-    #         comment_text_max_id,
-    #         comment_text.c.comment == comment_text_max_id.c.comment
-    #     )
-    # ).where(
-    #     comment_text.c.id == comment_text_max_id.c.max_id
-    # ).alias("comment_text_last_data")
-    #
-    # query = select([
-    #     comment_text_last_data.c.text,
-    #     comment_text_last_data.c.created,
-    #     comment_text_last_data.c.updated,
-    #     entity.c.token.label("entity_type"),
-    #     entity_type.c.name.label("entity_token")
-    # ]).select_from(
-    #     comment.join(
-    #         comment_text_last_data, comment_text_last_data.c.comment == comment.c.id
-    #     ).join(
-    #         entity, entity.c.id == comment.c.entity
-    #     ).join(
-    #         entity_type, entity_type.c.id == entity.c.type
-    #     )
-    # ).where(
-    #     comment.c.user == user_id
-    # ).order_by(
-    #     desc(comment_text_last_data.c.created)
-    # ).limit(
-    #     limit
-    # ).offset(
-    #     offset
-    # )
-    query = None
+    comment_text_max_id = select([
+        func.max(comment_text.c.id).label("max_id"),
+        func.min(comment_text.c.timestamp).label("created"),
+        func.max(comment_text.c.timestamp).label("updated"),
+        comment_text.c.comment
+    ]).select_from(
+        comment_text
+    ).group_by(
+        comment_text.c.comment
+    ).alias("comment_text_max_id")
+
+    comment_text_last_data = select([
+        comment_text.c.data.label("text"),
+        comment_text_max_id.c.created,
+        comment_text_max_id.c.updated,
+        comment_text.c.comment
+    ]).select_from(
+        comment_text.join(
+            comment_text_max_id,
+            comment_text.c.comment == comment_text_max_id.c.comment
+        )
+    ).where(
+        comment_text.c.id == comment_text_max_id.c.max_id
+    ).alias("comment_text_last_data")
+
+    comment_recursive = select([
+        comment.c.id,
+        comment.c.user,
+        comment.c.comment,
+        comment.c.key,
+        null().label("parent_key")
+    ]).where(
+        comment.c.id == comment_id
+    ).cte("comment_recursive", recursive=True)
+
+    comment_recursive = comment_recursive.union(
+        select([
+            comment.c.id,
+            comment.c.user,
+            comment.c.comment,
+            comment.c.key,
+            comment_recursive.c.key.label("parent_key")
+        ]).select_from(
+            comment.join(
+                comment_recursive, comment.c.comment == comment_recursive.c.id
+            )
+        )
+    )
+
+    query = select([
+        comment_text_last_data.c.text,
+        comment_text_last_data.c.created,
+        comment_text_last_data.c.updated,
+        comment_recursive.c.key,
+        comment_recursive.c.parent_key,
+        user.c.token.label("user")
+    ]).select_from(
+        comment_text_last_data.join(
+            comment_recursive,
+            comment_text_last_data.c.comment == comment_recursive.c.id
+        ).join(
+            user,
+            user.c.id == comment_recursive.c.user
+        )
+    )
+
+    if limit:
+        query = query.limit(limit)
+
+    if offset:
+        query = query.offset(offset)
 
     ds = await connection.execute(query)
 
