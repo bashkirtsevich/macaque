@@ -210,7 +210,7 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(isinstance(result["result"]["comment_token"], str))
             return result["result"]["comment_token"]
 
-        comment_tokens = [await insert_comment(i) for i in range(1000)]
+        comment_tokens = [await insert_comment(i) for i in range(100)]
 
         # Read1
         resp1 = await self.client.get("/api/comments/type2/entity1")
@@ -219,7 +219,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 1000)
+        self.assertTrue(len(resp1_result["result"]) == 100)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
@@ -286,7 +286,7 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(isinstance(result["result"]["comment_token"], str))
             return token
 
-        entity_tokens = [await insert_comment(i) for i in range(1000)]
+        entity_tokens = [await insert_comment(i) for i in range(100)]
 
         resp1 = await self.client.get("/api/comments/test_get_user_comments")
         self.assertTrue(resp1.status == 200)
@@ -294,7 +294,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 1000)
+        self.assertTrue(len(resp1_result["result"]) == 100)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
@@ -343,7 +343,7 @@ class ApplicationTestCase(AioHTTPTestCase):
             return result["result"]["comment_token"]
 
         root_token = await insert_comment()
-        replies_tokens = [await reply_comment(root_token, i) for i in range(1000)]
+        replies_tokens = [await reply_comment(root_token, i) for i in range(100)]
 
         resp1 = await self.client.get("/api/replies/test_get_comment_replies")
         self.assertTrue(resp1.status == 200)
@@ -351,7 +351,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 1000)
+        self.assertTrue(len(resp1_result["result"]) == 100)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
@@ -400,9 +400,9 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(isinstance(result["result"]["comment_token"], str))
             return result["result"]["comment_token"]
 
-        root_tokens = [await insert_comment(i) for i in range(100)]
+        root_tokens = [await insert_comment(i) for i in range(50)]
         replies_tokens = [
-            await reply_comment(root_token, i) for i in range(100) for root_token in root_tokens
+            await reply_comment(root_token, i) for i in range(50) for root_token in root_tokens
         ]
 
         resp1 = await self.client.get("/api/replies/type5/entity100")
@@ -411,7 +411,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 10000)
+        self.assertTrue(len(resp1_result["result"]) == 50 * 50)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
@@ -422,6 +422,83 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue("parent_key" in item)
             self.assertTrue((item["key"] in root_tokens) or (item["key"] in replies_tokens))
             self.assertTrue((item["parent_key"] is None) or (item["parent_key"] in root_tokens))
+
+    @unittest_run_loop
+    async def test_download_user(self):
+        async def insert_comment(idx):
+            token = "entity{}".format(idx)
+            resp = await self.client.post(
+                "/api/reply/type80/{}".format(token),
+                json={
+                    "user_token": "test_download_user",
+                    "text": "Short message for test_get_user_comments example"
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return token
+
+        for i in range(100):
+            await insert_comment(i)
+
+        resp1 = await self.client.get("/api/user/download/test_download_user")
+        self.assertTrue(resp1.status == 200)
+
+        resp1_result = await resp1.text()
+        self.assertTrue("xml" in resp1_result)
+
+    @unittest_run_loop
+    async def test_download_entity(self):
+        async def insert_comment(idx):
+            resp = await self.client.post(
+                "/api/reply/type90/entityxxxx375",
+                json={
+                    "user_token": "test_download_entity_{}".format(idx),
+                    "text": "Text message xx {}".format(idx)
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return result["result"]["comment_token"]
+
+        async def reply_comment(comment_token, idx):
+            resp = await self.client.post(
+                "/api/reply/{}".format(comment_token),
+                json={
+                    "user_token": "test_get_comment_replies_replier_{}".format(idx),
+                    "text": "Replica {}".format(idx)
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return result["result"]["comment_token"]
+
+        root_tokens = [await insert_comment(i) for i in range(50)]
+
+        for root_token in root_tokens:
+            for i in range(50):
+                await reply_comment(root_token, i)
+
+        resp1 = await self.client.get("/api/download/type90/entityxxxx375")
+        self.assertTrue(resp1.status == 200)
+
+        resp1_result = await resp1.text()
+        self.assertTrue("xml" in resp1_result)
 
 
 if __name__ == '__main__':
