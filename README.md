@@ -186,7 +186,7 @@ python deployer.py postgresql://rootuser:password@postgresql:port/databasse_name
 
 Запуск сервиса осуществляется заданием переменной окружения `DATABASE_URL` и запуском скрипта `app.py`
 ```
-export DATABASE_URL postgresql://user:password@postgresql:port/databasse_name
+export DATABASE_URL postgresql://capuchin:password@postgresql:port/monkey
 python app.py
 ```
 
