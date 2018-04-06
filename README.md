@@ -190,4 +190,13 @@ export DATABASE_URL postgresql://capuchin:password@postgresql:port/monkey
 python app.py
 ```
 
+### Тесты
+
+```
+docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_USER=test --name postgresql postgres
+python deployer.py postgresql://test:test@192.168.0.38/test
+export DATABASE_URL=postgresql://test:test@192.168.0.38/test
+python test.py
+```
+
 Сервис открывает tcp-порт `8080` и готов к работе.
