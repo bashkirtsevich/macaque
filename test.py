@@ -15,7 +15,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp = await self.client.post(
             "/api/reply/type1/entity1",
             json={
-                "user_token": "test_user",
+                "user_token": "test_add_comment",
                 "text": "Test message"
             }
         )
@@ -33,7 +33,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1 = await self.client.post(
             "/api/reply/type1/entity1",
             json={
-                "user_token": "test_user",
+                "user_token": "test_add_reply",
                 "text": "Hi, nice video!"
             }
         )
@@ -49,7 +49,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp2 = await self.client.post(
             "/api/reply/{comment_token}".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
-                "user_token": "test_replier",
+                "user_token": "test_add_reply_replier",
                 "text": "Lol, WTF? Not so interesting!"
             }
         )
@@ -67,7 +67,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1 = await self.client.post(
             "/api/reply/type1/entity1",
             json={
-                "user_token": "test_user",
+                "user_token": "test_edit_comment",
                 "text": "Cooooooooool video!"
             }
         )
@@ -81,7 +81,7 @@ class ApplicationTestCase(AioHTTPTestCase):
 
         # Edit comment
         resp2 = await self.client.post(
-            "/api/edit/{comment_token}/test_user".format(comment_token=resp1_result["result"]["comment_token"]),
+            "/api/edit/{comment_token}/test_edit_comment".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
                 "text": "Sorry, I don't think so :("
             }
@@ -96,7 +96,7 @@ class ApplicationTestCase(AioHTTPTestCase):
 
         # Edit message with same text value
         resp3 = await self.client.post(
-            "/api/edit/{comment_token}/test_user".format(comment_token=resp1_result["result"]["comment_token"]),
+            "/api/edit/{comment_token}/test_edit_comment".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
                 "text": "Sorry, I don't think so :("
             }
@@ -115,7 +115,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1 = await self.client.post(
             "/api/reply/type1/entity1",
             json={
-                "user_token": "test_user",
+                "user_token": "test_remove_comment",
                 "text": "I must delete this message..."
             }
         )
@@ -131,7 +131,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp2 = await self.client.post(
             "/api/remove/{comment_token}".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
-                "user_token": "test_user"
+                "user_token": "test_remove_comment"
             }
         )
         assert resp2.status == 200
@@ -146,7 +146,7 @@ class ApplicationTestCase(AioHTTPTestCase):
     async def test_remove_comment2(self):
         # Add new comment
         resp1 = await self.client.post(
-            "/api/reply/type1/entity1",
+            "/api/reply/type1/test_remove_comment2",
             json={
                 "user_token": "test_user",
                 "text": "I must delete this message..."
@@ -164,7 +164,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp2 = await self.client.post(
             "/api/reply/{comment_token}".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
-                "user_token": "test_replier",
+                "user_token": "test_remove_comment2_replier",
                 "text": "Lol, WTF? Not so interesting!"
             }
         )
@@ -180,7 +180,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp3 = await self.client.post(
             "/api/remove/{comment_token}".format(comment_token=resp1_result["result"]["comment_token"]),
             json={
-                "user_token": "test_user"
+                "user_token": "test_remove_comment2"
             }
         )
         assert resp3.status == 200
