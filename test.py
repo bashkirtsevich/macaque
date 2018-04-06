@@ -191,6 +191,81 @@ class ApplicationTestCase(AioHTTPTestCase):
         assert "success" in resp3_result["result"]
         assert not resp3_result["result"]["success"]
 
+    @unittest_run_loop
+    async def test_get_comments(self):
+        async def insert_comment(idx):
+            resp = await self.client.post(
+                "/api/reply/type2/entity1",
+                json={
+                    "user_token": "test_get_comments_user_{}".format(idx),
+                    "text": "Short message #{} for test_get_comments example".format(idx)
+                }
+            )
+            assert resp.status == 200
+
+            result = await resp.json()
+            assert "result" in result
+            assert isinstance(result["result"], dict)
+            assert "comment_token" in result["result"]
+            assert isinstance(result["result"]["comment_token"], str)
+            return result["result"]["comment_token"]
+
+        comment_tokens = [await insert_comment(i) for i in range(1000)]
+
+        # Read1
+        resp1 = await self.client.get("/api/comments/type2/entity1")
+        assert resp1.status == 200
+
+        resp1_result = await resp1.json()
+        assert "result" in resp1_result
+        assert isinstance(resp1_result["result"], list)
+        assert len(resp1_result["result"]) == 1000
+        for item in resp1_result["result"]:
+            assert isinstance(item, dict)
+            assert "text" in item
+            assert "created" in item
+            assert "updated" in item
+            assert "user" in item
+            assert "key" in item
+            assert "parent_key" in item
+            assert item["key"] in comment_tokens
+
+        # Read2
+        resp1 = await self.client.get("/api/comments/type2/entity1/100")
+        assert resp1.status == 200
+
+        resp1_result = await resp1.json()
+        assert "result" in resp1_result
+        assert isinstance(resp1_result["result"], list)
+        assert len(resp1_result["result"]) == 100
+        for item in resp1_result["result"]:
+            assert isinstance(item, dict)
+            assert "text" in item
+            assert "created" in item
+            assert "updated" in item
+            assert "user" in item
+            assert "key" in item
+            assert "parent_key" in item
+            assert item["key"] in comment_tokens
+
+        # Read3
+        resp1 = await self.client.get("/api/comments/type2/entity1/100/100")
+        assert resp1.status == 200
+
+        resp1_result = await resp1.json()
+        assert "result" in resp1_result
+        assert isinstance(resp1_result["result"], list)
+        assert len(resp1_result["result"]) == 100
+        for item in resp1_result["result"]:
+            assert isinstance(item, dict)
+            assert "text" in item
+            assert "created" in item
+            assert "updated" in item
+            assert "user" in item
+            assert "key" in item
+            assert "parent_key" in item
+            assert item["key"] in comment_tokens
+
 
 if __name__ == '__main__':
     # os.environ["DATABASE_URL"] = "postgresql://capuchin:passwd@localhost:port/monkey_tester"
