@@ -55,13 +55,16 @@ async def edit_comment(connection, data):
 
 
 async def remove_comment(connection, data):
-    await api.remove_comment(
-        connection,
-        user_token=data["user_token"],
-        comment_unique_key=data["comment_token"]
-    )
+    try:
+        await api.remove_comment(
+            connection,
+            user_token=data["user_token"],
+            comment_unique_key=data["comment_token"]
+        )
 
-    return {"success": True}
+        return {"success": True}
+    except api.APIException:
+        return {"success": False}
 
 
 async def read_entity_comments(connection, data):
@@ -195,7 +198,7 @@ async def handle_stream(connection, request, future):
     return response
 
 
-async def run_app():
+async def get_app():
     db_engine = create_engine(os.getenv("DATABASE_URL"), strategy=ASYNCIO_STRATEGY)
     db_connection = await db_engine.connect()
 
@@ -257,4 +260,4 @@ async def run_app():
 
 
 if __name__ == "__main__":
-    web.run_app(run_app())
+    web.run_app(get_app())
