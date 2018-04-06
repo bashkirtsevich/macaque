@@ -306,6 +306,64 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(item["entity_type"] == "type3")
             self.assertTrue(item["entity_token"] in entity_tokens)
 
+    @unittest_run_loop
+    async def test_get_comment_replies(self):
+        async def insert_comment():
+            resp = await self.client.post(
+                "/api/reply/type4/entity50",
+                json={
+                    "user_token": "test_get_comment_replies",
+                    "text": "Root message"
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return result["result"]["comment_token"]
+
+        async def reply_comment(comment_token, idx):
+            resp = await self.client.post(
+                "/api/reply/{}".format(comment_token),
+                json={
+                    "user_token": "test_get_comment_replies_replier_{}".format(idx),
+                    "text": "Replica {}".format(idx)
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return result["result"]["comment_token"]
+
+        root_token = await insert_comment()
+        replies_tokens = [await reply_comment(root_token, i) for i in range(1000)]
+
+        resp1 = await self.client.get("/api/replies/test_get_comment_replies")
+        self.assertTrue(resp1.status == 200)
+
+        resp1_result = await resp1.json()
+        self.assertTrue("result" in resp1_result)
+        self.assertTrue(isinstance(resp1_result["result"], list))
+        self.assertTrue(len(resp1_result["result"]) == 1000)
+        for item in resp1_result["result"]:
+            self.assertTrue(isinstance(item, dict))
+            self.assertTrue("text" in item)
+            self.assertTrue("created" in item)
+            self.assertTrue("updated" in item)
+            self.assertTrue("key" in item)
+            self.assertTrue("parent_key" in item)
+            self.assertTrue("user_token" in item)
+
+            self.assertTrue(item["key"] in replies_tokens)
+            self.assertTrue(item["parent_key"] == root_token)
+
 
 if __name__ == '__main__':
     # os.environ["DATABASE_URL"] = "postgresql://capuchin:passwd@localhost:port/monkey_tester"
