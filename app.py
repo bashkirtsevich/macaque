@@ -176,10 +176,6 @@ streamer_arg_validators = {
 
 
 async def handle_stream(connection, request, future):
-    data = await _read_args(request)
-
-    validate_args(data, streamer_arg_validators[future])
-
     response = web.StreamResponse(
         status=200,
         reason="OK",
@@ -190,10 +186,17 @@ async def handle_stream(connection, request, future):
 
     await response.prepare(request)
 
-    await streamer.write_head()
-    async for item in future(connection, data):
-        await streamer.write_body(item)
-    await streamer.write_tail()
+    try:
+        data = await _read_args(request)
+
+        validate_args(data, streamer_arg_validators[future])
+
+        await streamer.write_head()
+        async for item in future(connection, data):
+            await streamer.write_body(item)
+        await streamer.write_tail()
+    except api.APIException as e:
+        response.write_eof("Error: {}".format(str(e)).encode("utf-8"))
 
     return response
 
