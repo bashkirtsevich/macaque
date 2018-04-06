@@ -249,7 +249,7 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(item["key"] in comment_tokens)
 
         # Read3
-        resp1 = await self.client.get("/api/comments/type2/entity1/100/100")
+        resp1 = await self.client.get("/api/comments/type2/entity1/5/5")
         self.assertTrue(resp1.status == 200)
 
         resp1_result = await resp1.json()
@@ -345,7 +345,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         root_token = await insert_comment()
         replies_tokens = [await reply_comment(root_token, i) for i in range(100)]
 
-        resp1 = await self.client.get("/api/replies/test_get_comment_replies")
+        resp1 = await self.client.get("/api/replies/{}".format(root_token))
         self.assertTrue(resp1.status == 200)
 
         resp1_result = await resp1.json()
