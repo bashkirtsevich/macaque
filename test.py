@@ -266,6 +266,46 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue("parent_key" in item)
             self.assertTrue(item["key"] in comment_tokens)
 
+    @unittest_run_loop
+    async def test_get_user_comments(self):
+        async def insert_comment(idx):
+            token = "entity{}".format(idx)
+            resp = await self.client.post(
+                "/api/reply/type3/{}".format(token),
+                json={
+                    "user_token": "test_get_user_comments".format(idx),
+                    "text": "Short message for test_get_user_comments example".format(idx)
+                }
+            )
+            self.assertTrue(resp.status == 200)
+
+            result = await resp.json()
+            self.assertTrue("result" in result)
+            self.assertTrue(isinstance(result["result"], dict))
+            self.assertTrue("comment_token" in result["result"])
+            self.assertTrue(isinstance(result["result"]["comment_token"], str))
+            return token
+
+        entity_tokens = [await insert_comment(i) for i in range(1000)]
+
+        resp1 = await self.client.get("/api/comments/test_get_user_comments")
+        self.assertTrue(resp1.status == 200)
+
+        resp1_result = await resp1.json()
+        self.assertTrue("result" in resp1_result)
+        self.assertTrue(isinstance(resp1_result["result"], list))
+        self.assertTrue(len(resp1_result["result"]) == 1000)
+        for item in resp1_result["result"]:
+            self.assertTrue(isinstance(item, dict))
+            self.assertTrue("text" in item)
+            self.assertTrue("created" in item)
+            self.assertTrue("updated" in item)
+            self.assertTrue("entity_type" in item)
+            self.assertTrue("entity_token" in item)
+            self.assertTrue(item["text"] == "Short message for test_get_user_comments example")
+            self.assertTrue(item["entity_type"] == "type3")
+            self.assertTrue(item["entity_token"] in entity_tokens)
+
 
 if __name__ == '__main__':
     # os.environ["DATABASE_URL"] = "postgresql://capuchin:passwd@localhost:port/monkey_tester"
