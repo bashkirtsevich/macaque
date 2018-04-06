@@ -411,7 +411,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 50 * 50)
+        self.assertTrue(len(resp1_result["result"]) == 1000)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
