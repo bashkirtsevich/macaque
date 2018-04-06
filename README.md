@@ -182,6 +182,8 @@ pip install -r requirements.txt
 python deployer.py postgresql://rootuser:password@postgresql:port/databasse_name
 ```
 
+### Запуск
+
 Запуск сервиса осуществляется заданием переменной окружения `DATABASE_URL` и запуском скрипта `app.py`
 ```
 export DATABASE_URL postgresql://user:password@postgresql:port/databasse_name
