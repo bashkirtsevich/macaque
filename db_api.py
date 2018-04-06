@@ -315,8 +315,8 @@ async def get_user_comments(connection, user_id, limit, offset, timestamp_from=N
         comment_text_last_data.c.text,
         comment_text_last_data.c.created,
         comment_text_last_data.c.updated,
-        entity.c.token.label("entity_type"),
-        entity_type.c.name.label("entity_token")
+        entity.c.token.label("entity_token"),
+        entity_type.c.name.label("entity_type")
     ]).select_from(
         comment.join(
             comment_text_last_data, text_data_where_clause
