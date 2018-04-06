@@ -273,8 +273,8 @@ class ApplicationTestCase(AioHTTPTestCase):
             resp = await self.client.post(
                 "/api/reply/type3/{}".format(token),
                 json={
-                    "user_token": "test_get_user_comments".format(idx),
-                    "text": "Short message for test_get_user_comments example".format(idx)
+                    "user_token": "test_get_user_comments",
+                    "text": "Short message for test_get_user_comments example"
                 }
             )
             self.assertTrue(resp.status == 200)
