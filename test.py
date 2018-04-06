@@ -187,7 +187,7 @@ class ApplicationTestCase(AioHTTPTestCase):
 
         resp3_result = await resp3.json()
         self.assertTrue("result" in resp3_result)
-        self.assertTrue(isinstance(resp3_result["result"], bool))
+        self.assertTrue(isinstance(resp3_result["result"], dict))
         self.assertTrue("success" in resp3_result["result"])
         self.assertFalse(resp3_result["result"]["success"])
 
