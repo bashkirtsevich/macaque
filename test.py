@@ -360,9 +360,7 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue("key" in item)
             self.assertTrue("parent_key" in item)
             self.assertTrue("user_token" in item)
-
             self.assertTrue((item["key"] in replies_tokens) or (item["key"] in root_token))
-            self.assertTrue(item["parent_key"] == root_token)
 
     @unittest_run_loop
     async def test_get_entity_replies(self):
