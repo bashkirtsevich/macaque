@@ -400,9 +400,9 @@ class ApplicationTestCase(AioHTTPTestCase):
             self.assertTrue(isinstance(result["result"]["comment_token"], str))
             return result["result"]["comment_token"]
 
-        root_tokens = [await insert_comment(i) for i in range(1000)]
+        root_tokens = [await insert_comment(i) for i in range(100)]
         replies_tokens = [
-            await reply_comment(root_token, i) for i in range(1000) for root_token in root_tokens
+            await reply_comment(root_token, i) for i in range(100) for root_token in root_tokens
         ]
 
         resp1 = await self.client.get("/api/replies/type5/entity100")
@@ -411,7 +411,7 @@ class ApplicationTestCase(AioHTTPTestCase):
         resp1_result = await resp1.json()
         self.assertTrue("result" in resp1_result)
         self.assertTrue(isinstance(resp1_result["result"], list))
-        self.assertTrue(len(resp1_result["result"]) == 1000000)
+        self.assertTrue(len(resp1_result["result"]) == 10000)
         for item in resp1_result["result"]:
             self.assertTrue(isinstance(item, dict))
             self.assertTrue("text" in item)
